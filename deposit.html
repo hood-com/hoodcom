@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تغذية حسابي - هود كوم</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ===== شبكة الخدمات الديناميكية ===== */
+    .services-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+      gap:14px;
+      margin-top:14px;
+    }
+    .service-card {
+      background:var(--bg-card);
+      border:2px solid var(--border-color);
+      border-radius:16px;
+      padding:16px 10px;
+      text-align:center;
+      cursor:pointer;
+      transition:all .2s ease;
+      position:relative;
+    }
+    .service-card:hover {
+      border-color:var(--gold);
+      transform:translateY(-3px);
+      box-shadow:0 8px 20px rgba(255,215,0,0.15);
+    }
+    .service-card .service-img {
+      width:64px; height:64px; object-fit:contain; border-radius:12px;
+      margin:0 auto 10px; display:block;
+      background:rgba(255,255,255,0.03); padding:6px;
+    }
+    .service-card .service-placeholder {
+      width:64px; height:64px; border-radius:12px;
+      background:rgba(255,215,0,0.1); display:flex; align-items:center;
+      justify-content:center; font-weight:900; color:var(--gold);
+      margin:0 auto 10px; font-size:28px;
+    }
+    .service-card .service-name {
+      font-size:14px; font-weight:800; color:#fff; line-height:1.35;
+    }
+    /* ===== Modal ديناميكي ===== */
+    .dyn-modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      z-index:9999; display:none; align-items:flex-start; justify-content:center;
+      padding:20px 12px; overflow-y:auto;
+    }
+    .dyn-modal-overlay.active { display:flex; }
+    .dyn-modal {
+      background:var(--bg-card);
+      border:2px solid var(--gold);
+      border-radius:20px;
+      max-width:520px; width:100%;
+      box-shadow:0 20px 60px rgba(0,0,0,0.6);
+      animation: fadeIn .25s ease;
+      overflow:hidden;
+      margin-top:20px;
+    }
+    .dyn-modal-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px; border-bottom:1px solid var(--border-color);
+      background:linear-gradient(135deg, rgba(255,215,0,0.08), transparent);
+    }
+    .dyn-modal-header h3 {
+      margin:0; color:var(--gold); font-size:17px; font-weight:900;
+    }
+    .dyn-modal-header .close-btn {
+      background:transparent; border:none; color:#fff; font-size:26px;
+      cursor:pointer; line-height:1;
+    }
+    .dyn-modal-body { padding:18px; }
+    .dyn-modal-hero {
+      text-align:center; margin-bottom:16px;
+    }
+    .dyn-modal-hero img {
+      width:80px; height:80px; object-fit:contain; border-radius:14px;
+      background:rgba(255,255,255,0.04); padding:6px;
+    }
+    .dyn-modal-hero .placeholder {
+      width:80px; height:80px; border-radius:14px;
+      background:rgba(255,215,0,0.1); display:inline-flex;
+      align-items:center; justify-content:center; color:var(--gold);
+      font-size:34px; font-weight:900;
+    }
+    .dyn-modal-desc {
+      font-size:13px; color:var(--text-secondary);
+      background:rgba(255,215,0,0.06); border-radius:10px;
+      padding:10px 12px; margin-bottom:14px;
+      line-height:1.6;
+    }
+    .dyn-field { margin-bottom:14px; }
+    .dyn-field label { display:block; margin-bottom:6px; font-size:13px; font-weight:700; color:var(--text-primary); }
+    .dyn-field .req { color:#FF3D57; margin-inline-start:4px; }
+    .dyn-field input, .dyn-field select, .dyn-field textarea {
+      width:100%;
+      background:rgba(0,0,0,0.4);
+      border:1px solid var(--border-color);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      font-family:'Tajawal', sans-serif;
+      font-size:14px;
+    }
+    .dyn-field input:focus, .dyn-field select:focus, .dyn-field textarea:focus {
+      border-color:var(--gold); outline:none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== النافبار ===== -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="logo-link">
+      <img src="logo.svg" alt="هود كوم" class="logo-img" width="140" height="42">
+    </a>
+    <div class="nav-actions">
+      <a href="deposit.html" class="nav-btn" title="رصيدي" style="text-decoration:none; padding:0 12px; width:auto; gap:6px; font-size:13px; font-weight:800; background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:10px; color:var(--gold); display:inline-flex; align-items:center;">
+        <span data-icon="wallet" data-size="16"></span>
+        <span id="navUserBalanceDisplay" style="color:var(--gold); font-weight:900;">0 ر.ي</span>
+      </a>
+      <a href="index.html" class="nav-btn" aria-label="الرئيسية">
+        <span data-icon="home" data-size="20"></span>
+      </a>
+      <a href="account.html" class="nav-btn" aria-label="حسابي">
+        <span data-icon="user" data-size="20"></span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ===== محتوى الصفحة ===== -->
+  <main class="deposit-page">
+
+    <!-- بطاقة الرصيد العلوي -->
+    <div class="balance-banner">
+      <div class="title">
+        <span data-icon="wallet" data-size="18"></span>
+        <span>رصيد حسابك الحالي في الموقع</span>
+      </div>
+      <div class="amount" id="userCurrentBalanceDisplay">0.00 ر.ي</div>
+      <p style="font-size:12px; color:var(--text-secondary); margin-top:8px;">
+        يمكنك استخدام رصيدك في شراء أي منتج أو عرض من الموقع مباشرة وبدون انتظار
+      </p>
+    </div>
+
+    <!-- ===== الأبواب الرئيسية (تغذية / استرداد) ===== -->
+    <div class="main-doors-nav">
+      <button class="door-btn active" data-door="deposit" id="doorBtnDeposit">
+        <span data-icon="plus" data-size="26" style="color:var(--gold);"></span>
+        <span>🚪 تغذية حسابي</span>
+      </button>
+      <button class="door-btn" data-door="withdraw" id="doorBtnWithdraw">
+        <span data-icon="send" data-size="26" style="color:#00E676;"></span>
+        <span>💸 خدمة الاسترداد</span>
+      </button>
+    </div>
+
+    <!-- ===== الباب الأول: تغذية حسابي ===== -->
+    <div class="door-content active" id="doorContentDeposit">
+
+      <!-- تبويبات فرعية -->
+      <div class="sub-tabs-nav">
+        <button class="sub-tab-btn active" id="subTabBtnRequest">
+          <span data-icon="plus" data-size="18"></span>
+          <span>الخدمات</span>
+        </button>
+        <button class="sub-tab-btn" id="subTabBtnHistory">
+          <span data-icon="list" data-size="18"></span>
+          <span>عمليات الإيداع</span>
+        </button>
+      </div>
+
+      <!-- محتوى: قائمة خدمات التغذية الديناميكية -->
+      <div class="sub-tab-content active" id="subTabContentRequest">
+        <div id="depositServicesGrid" class="services-grid">
+          <div style="grid-column:1/-1; text-align:center; padding:30px; color:#aaa;">
+            جاري تحميل خدمات التغذية...
+          </div>
+        </div>
+        <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:20px;">
+          اضغط على أي خدمة أعلاه لفتح نموذج تعبئة البيانات الخاص بها.
+        </p>
+      </div>
+
+      <!-- سجل عمليات الإيداع -->
+      <div class="sub-tab-content" id="subTabContentHistory">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0;">📋 سجل وتاريخ عمليات التغذية</h3>
+          <button class="btn" style="padding:6px 12px; font-size:12px; background:var(--bg-secondary); border:1px solid var(--border-color);">
+            <span data-icon="refresh" data-size="14"></span> تحديث
+          </button>
+        </div>
+        <div id="depositHistoryListContainer">
+          <div style="text-align:center; padding:40px 20px; color:var(--text-secondary);">جاري تحميل السجل...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== الباب الثاني: خدمة الاسترداد ===== -->
+    <div class="door-content" id="doorContentWithdraw">
+      <div style="text-align:center; margin-bottom:20px;">
+        <h2 style="font-size:20px; font-weight:900; color:var(--gold); margin-bottom:6px;">💸 خدمة استرداد وسحب الرصيد</h2>
+        <p style="font-size:13px; color:var(--text-secondary);" id="withdrawInstructionsText">
+          اختر طريقة السحب المناسبة واضغط عليها لفتح نموذج الاسترداد الخاص بها.
+        </p>
+      </div>
+
+      <div id="withdrawServicesGrid" class="services-grid">
+        <div style="grid-column:1/-1; text-align:center; padding:30px; color:#aaa;">جاري تحميل خدمات الاسترداد...</div>
+      </div>
+
+      <!-- سجل الاسترداد -->
+      <div style="margin-top:35px;">
+        <h3 style="font-size:16px; font-weight:800; color:var(--text-primary); margin-bottom:14px; border-top:1px solid var(--border-color); padding-top:20px;">
+          📋 سجل طلبات الاسترداد السابقة
+        </h3>
+        <div id="withdrawHistoryListContainer">
+          <div style="text-align:center; padding:25px; color:var(--text-secondary);">لا توجد طلبات استرداد سابقة.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== Modal الديناميكي (يستخدم لكل الخدمات) ===== -->
+  <div class="dyn-modal-overlay" id="dynModalOverlay">
+    <div class="dyn-modal">
+      <div class="dyn-modal-header">
+        <h3 id="dynModalTitle">-</h3>
+        <button type="button" class="close-btn" aria-label="إغلاق">&times;</button>
+      </div>
+      <div class="dyn-modal-body">
+        <div class="dyn-modal-hero" id="dynModalHero"></div>
+        <div class="dyn-modal-desc" id="dynModalDesc" style="display:none;"></div>
+        <form id="dynServiceForm" novalidate>
+          <div id="dynFieldsContainer"></div>
+          <button type="submit" class="btn btn-gold btn-full" id="dynSubmitBtn" style="padding:14px; font-size:15px; font-weight:900; margin-top:8px;">
+            <span data-icon="send" data-size="18"></span>
+            <span id="dynSubmitLabel">🚀 إرسال الطلب</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== التنبيه ===== -->
+  <div class="toast" id="toast" role="alert" aria-live="polite">
+    <div class="toast-icon"><span data-icon="check" data-size="18"></span></div>
+    <span id="toastText"></span>
+  </div>
+
+  <!-- ===== شريط التنقل السفلي ===== -->
+  <nav class="bottom-nav visible" id="bottomNav" role="navigation" aria-label="التنقل السفلي">
+    <a href="index.html" class="bottom-nav-item" aria-label="الرئيسية">
+      <div class="bottom-nav-icon"><span data-icon="home" data-size="22"></span></div>
+      <span class="bottom-nav-label">الرئيسية</span>
+    </a>
+    <a href="category.html" class="bottom-nav-item" aria-label="الأقسام">
+      <div class="bottom-nav-icon"><span data-icon="layers" data-size="22"></span></div>
+      <span class="bottom-nav-label">الأقسام</span>
+    </a>
+    <a href="deposit.html" class="bottom-nav-item active" aria-label="تغذية حسابي">
+      <div class="bottom-nav-icon"><span data-icon="wallet" data-size="22"></span></div>
+      <span class="bottom-nav-label">تغذية حسابي</span>
+    </a>
+    <a data-support-modal="true" href="#" class="bottom-nav-item bottom-nav-support-glow" aria-label="الدعم" title="الدعم الفني والتواصل">
+      <div class="bottom-nav-icon"><span data-icon="support" data-size="28"></span></div>
+      <span class="bottom-nav-label" style="font-size:10px; font-weight:900;">الدعم</span>
+    </a>
+    <a href="reports.html" class="bottom-nav-item" aria-label="العمليات">
+      <div class="bottom-nav-icon"><span data-icon="shield" data-size="22"></span></div>
+      <span class="bottom-nav-label">العمليات</span>
+    </a>
+    <a href="account.html" class="bottom-nav-item" aria-label="حسابي">
+      <div class="bottom-nav-icon"><span data-icon="user" data-size="22"></span></div>
+      <span class="bottom-nav-label">حسابي</span>
+    </a>
+  </nav>
+
+  <!-- ===== السكريبتات ===== -->
+  
+  
+  
+  
+  
+
+
+  
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حسابي - هود كوم</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* أنماط خاصة بصفحة الحساب */
+    .account-page {
+      padding: 100px 20px 60px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .account-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      box-shadow: 0 10px 40px var(--shadow-color);
+      text-align: center;
+    }
+
+    .account-avatar {
+      width: 100px;
+      height: 100px;
+      background: var(--gradient-gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--black-pure);
+      box-shadow: 0 4px 20px var(--gold-glow-strong);
+    }
+
+    .account-name {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .account-email {
+      font-size: 14px;
+      color: var(--text-secondary);
+      direction: ltr;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .account-phone {
+      font-size: 14px;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .account-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .account-verified.unverified {
+      background: rgba(255, 61, 87, 0.15);
+      color: var(--danger);
+      border-color: rgba(255, 61, 87, 0.3);
+    }
+
+    .account-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 20px 0;
+    }
+
+    .account-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      text-align: right;
+      margin-bottom: 24px;
+    }
+
+    .account-info-item {
+      background: var(--bg-secondary);
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+    }
+
+    .account-info-item .label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .account-info-item .value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .account-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .account-actions .btn {
+      width: 100%;
+    }
+
+    .account-actions .btn-danger {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: var(--radius);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .account-actions .btn-danger:hover {
+      background: #e63946;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 61, 87, 0.4);
+    }
+
+    .account-guest {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .account-guest h2 {
+      font-size: 22px;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+
+    .account-guest p {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .account-info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== النافبار ===== -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="logo-link">
+      <img src="logo.svg" alt="هود كوم" class="logo-img" width="140" height="42">
+    </a>
+    <div class="nav-actions">
+      <a href="deposit.html" class="nav-btn" title="رصيدي" style="text-decoration:none; padding:0 12px; width:auto; gap:6px; font-size:13px; font-weight:800; background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:10px; color:var(--gold); display:inline-flex; align-items:center;">
+        <span data-icon="wallet" data-size="16"></span>
+        <span id="navUserBalanceDisplay" class="nav-user-balance-display" style="color:var(--gold); font-weight:900;">0 ر.ي</span>
+      </a>
+      <a href="index.html" class="nav-btn" aria-label="الرئيسية">
+        <span data-icon="home" data-size="20"></span>
+      </a>
+      <button class="nav-btn" id="logoutBtn" aria-label="تسجيل الخروج">
+        <span data-icon="close" data-size="20"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== محتوى الصفحة ===== -->
+  <main class="account-page" id="accountPage">
+    <!-- سيتم تعبئته ديناميكياً -->
+    <div id="accountContent"></div>
+  </main>
+
+  <!-- ===== التنبيه ===== -->
+  <div class="toast" id="toast" role="alert" aria-live="polite">
+    <div class="toast-icon"><span data-icon="check" data-size="18"></span></div>
+    <span id="toastText"></span>
+  </div>
+
+  <!-- ===== السكريبتات ===== -->
+  
+
+
+  
+  
+  
+  
+
+<!-- ===== الأزرار العائمة ===== -->
+<button class="back-top" id="backTop" aria-label="العودة للأعلى" title="العودة للأعلى">
+  <span data-icon="arrowUp" data-size="20"></span>
+</button>
+
+<!-- ===== شريط التنقل السفلي الثابت ===== -->
+<nav class="bottom-nav visible" id="bottomNav" role="navigation" aria-label="التنقل السفلي">
+  <a href="index.html" class="bottom-nav-item" aria-label="الرئيسية">
+    <div class="bottom-nav-icon"><span data-icon="home" data-size="22"></span></div>
+    <span class="bottom-nav-label">الرئيسية</span>
+  </a>
+  <a href="category.html" class="bottom-nav-item" aria-label="الأقسام">
+    <div class="bottom-nav-icon"><span data-icon="layers" data-size="22"></span></div>
+    <span class="bottom-nav-label">الأقسام</span>
+  </a>
+  <a href="deposit.html" class="bottom-nav-item" aria-label="تغذية حسابي">
+    <div class="bottom-nav-icon"><span data-icon="wallet" data-size="22"></span></div>
+    <span class="bottom-nav-label">تغذية حسابي</span>
+  </a>
+  <a data-support-modal="true" href="#" class="bottom-nav-item bottom-nav-support-glow" aria-label="الدعم" title="الدعم الفني والتواصل">
+    <div class="bottom-nav-icon"><span data-icon="support" data-size="28"></span></div>
+    <span class="bottom-nav-label" style="font-size:10px; font-weight:900;">الدعم</span>
+  </a>
+  <a href="reports.html" class="bottom-nav-item" aria-label="العمليات">
+    <div class="bottom-nav-icon"><span data-icon="shield" data-size="22"></span></div>
+    <span class="bottom-nav-label">العمليات</span>
+  </a>
+  <a href="account.html" class="bottom-nav-item active" aria-label="حسابي">
+    <div class="bottom-nav-icon"><span data-icon="user" data-size="22"></span></div>
+    <span class="bottom-nav-label">حسابي</span>
+  </a>
+</nav>
+
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

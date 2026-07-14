@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>صفحة العمليات والتوثيق - هود كوم</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    .reports-page {
+      padding: 100px 20px 80px;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+    .report-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+    .report-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .status-pending { background: rgba(243, 156, 18, 0.18); color: #f39c12; border: 1px solid rgba(243, 156, 18, 0.4); }
+    .status-success { background: rgba(46, 204, 113, 0.18); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); }
+    .status-rejected { background: rgba(231, 76, 60, 0.18); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.4); }
+  </style>
+</head>
+<body>
+
+<!-- شريط التنقل العلوي -->
+<header class="header">
+  <div class="header-inner" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <a href="index.html" class="logo" style="text-decoration:none; display:flex; align-items:center; gap:8px;">
+      <img src="logo.svg" alt="هود كوم" width="40" height="40">
+      <span style="font-weight:900; font-size:20px; color:#fff;">هود <span class="gold">كوم</span></span>
+    </a>
+    <a href="deposit.html" class="nav-btn" title="رصيدي" style="text-decoration:none; padding:6px 12px; gap:6px; font-size:13px; font-weight:800; background:rgba(255,215,0,0.1); border:1px solid var(--gold); border-radius:10px; color:var(--gold); display:inline-flex; align-items:center;">
+      <span data-icon="wallet" data-size="16"></span>
+      <span id="navUserBalanceDisplay" class="nav-user-balance-display" style="color:var(--gold); font-weight:900;">0 ر.ي</span>
+    </a>
+  </div>
+</header>
+
+<div class="reports-page">
+  <div style="text-align:center; margin-bottom:30px;">
+    <h1 style="color:var(--gold); font-size:26px; font-weight:900; margin-bottom:8px;">📊 سجل العمليات والطلبات</h1>
+    <p style="color:var(--text-secondary); font-size:14px;">تجمع هذه الصفحة كافة توثيقات حسابك وطلبات الشراء بانتظار تأكيد واعتماد الإدارة</p>
+  </div>
+
+  <div id="reportsContent">
+    <div style="text-align:center; padding:40px;"><div class="admin-auth-spinner" style="margin:0 auto;"></div></div>
+  </div>
+</div>
+
+<!-- زر العودة للأعلى -->
+<button class="back-top" id="backTop" aria-label="العودة للأعلى" title="العودة للأعلى">
+  <span data-icon="arrowUp" data-size="20"></span>
+</button>
+
+<!-- التنقل السفلي الثابت -->
+<nav class="bottom-nav visible" id="bottomNav" role="navigation" aria-label="التنقل السفلي">
+  <a href="index.html" class="bottom-nav-item" aria-label="الرئيسية">
+    <div class="bottom-nav-icon"><span data-icon="home" data-size="22"></span></div>
+    <span class="bottom-nav-label">الرئيسية</span>
+  </a>
+  <a href="category.html" class="bottom-nav-item" aria-label="الأقسام">
+    <div class="bottom-nav-icon"><span data-icon="layers" data-size="22"></span></div>
+    <span class="bottom-nav-label">الأقسام</span>
+  </a>
+  <a href="deposit.html" class="bottom-nav-item" aria-label="تغذية حسابي">
+    <div class="bottom-nav-icon"><span data-icon="wallet" data-size="22"></span></div>
+    <span class="bottom-nav-label">تغذية حسابي</span>
+  </a>
+  <a data-support-modal="true" href="#" class="bottom-nav-item bottom-nav-support-glow" aria-label="الدعم" title="الدعم الفني والتواصل">
+    <div class="bottom-nav-icon"><span data-icon="support" data-size="28"></span></div>
+    <span class="bottom-nav-label" style="font-size:10px; font-weight:900;">الدعم</span>
+  </a>
+  <a href="reports.html" class="bottom-nav-item active" aria-label="العمليات">
+    <div class="bottom-nav-icon"><span data-icon="shield" data-size="22"></span></div>
+    <span class="bottom-nav-label">العمليات</span>
+  </a>
+  <a href="account.html" class="bottom-nav-item" aria-label="حسابي">
+    <div class="bottom-nav-icon"><span data-icon="user" data-size="22"></span></div>
+    <span class="bottom-nav-label">حسابي</span>
+  </a>
+</nav>
+
+
+
+
+
+
+
+
+
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="robots" content="noindex, nofollow">
+
+<title>لوحة التحكم | هود كوم</title>
+<meta name="description" content="لوحة التحكم السحابية - هود كوم">
+
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="apple-touch-icon" href="logo.svg">
+<meta name="theme-color" content="#000000">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.admin-auth-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(255,215,0,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(197,160,40,0.05) 0%, transparent 50%),
+    var(--bg-primary);
+}
+
+.admin-auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px var(--shadow-color), 0 0 30px var(--gold-glow);
+}
+
+.admin-auth-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background: var(--gradient-gold);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black-pure);
+  box-shadow: 0 8px 30px var(--gold-glow-strong);
+}
+
+.admin-auth-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.admin-auth-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.7;
+}
+
+.admin-auth-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.admin-user-avatar {
+  width: 44px;
+  height: 44px;
+  background: var(--gradient-gold);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black-pure);
+  font-weight: 900;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.admin-user-details {
+  flex: 1;
+  text-align: right;
+  min-width: 0;
+}
+
+.admin-user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-user-email {
+  font-size: 11px;
+  color: var(--text-secondary);
+  direction: ltr;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--gradient-gold);
+  color: var(--black-pure);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.admin-tabs {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+@media (max-width: 768px) {
+  .admin-tabs {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 480px) {
+  .admin-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-contact-row,
+.admin-field-row,
+.admin-featured-row {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.admin-contact-row .form-row,
+.admin-field-row .form-row {
+  margin-bottom: 8px;
+}
+
+.admin-row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.admin-row-remove {
+  padding: 6px 12px;
+  background: rgba(255,61,87,0.15);
+  color: var(--danger);
+  border: 1px solid rgba(255,61,87,0.3);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Tajawal', sans-serif;
+}
+
+.admin-row-remove:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.admin-customer-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: var(--transition);
+}
+
+.admin-customer-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 20px var(--gold-glow);
+}
+
+.admin-customer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.admin-customer-avatar {
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-gold);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black-pure);
+  font-weight: 900;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.admin-customer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-customer-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.admin-customer-email {
+  font-size: 11px;
+  color: var(--text-secondary);
+  direction: ltr;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-customer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.admin-customer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--gold-glow);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.admin-customer-orders {
+  margin-top: 12px;
+}
+
+.admin-customer-orders-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-order-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.admin-order-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.admin-order-item-name {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-order-item-price {
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.admin-order-item-meta {
+  font-size: 10px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-order-dyn {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.admin-order-dyn-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+.admin-order-dyn-item b { color: var(--gold); }
+
+.admin-empty-customers {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius);
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.admin-status-available {
+  background: rgba(0,230,118,0.15);
+  color: var(--success);
+  border: 1px solid rgba(0,230,118,0.3);
+}
+
+.admin-status-unavailable {
+  background: rgba(255,61,87,0.15);
+  color: var(--danger);
+  border: 1px solid rgba(255,61,87,0.3);
+}
+
+.admin-status-coming {
+  background: rgba(255,145,0,0.15);
+  color: var(--warning);
+  border: 1px solid rgba(255,145,0,0.3);
+}
+
+.admin-danger-zone {
+  background: linear-gradient(135deg, rgba(255,61,87,0.1), rgba(255,61,87,0.05));
+  border: 1px solid rgba(255,61,87,0.3);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.admin-danger-zone h3 {
+  color: var(--danger);
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-danger-zone p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  line-height: 1.7;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-danger:hover {
+  background: #e63946;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255,61,87,0.4);
+}
+
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.confirm-modal.open {
+  display: flex;
+}
+
+.confirm-modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px var(--gold-glow-strong);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.confirm-modal-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  background: rgba(255,61,87,0.15);
+  border: 2px solid var(--danger);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--danger);
+}
+
+.confirm-modal-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.confirm-modal-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.7;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-modal-actions .btn {
+  flex: 1;
+}
+</style>
+</head>
+<body>
+
+<!-- شاشة تحميل عامة مؤقتة (لا تكشف عن طبيعة الصفحة) -->
+<div class="admin-auth-screen" id="adminAuthScreen">
+  <div class="admin-auth-card">
+    <div class="admin-auth-spinner"></div>
+  </div>
+</div>
+
+<!-- ===== لوحة التحكم الرئيسية ===== -->
+<div class="admin-wrap" id="adminMainWrap" style="display:none;">
+  <a href="index.html" class="back-link">
+    <span data-icon="arrow" data-size="14"></span>
+    <span>العودة للموقع</span>
+  </a>
+
+  <div class="admin-header">
+    <div class="admin-header-icon">
+      <span data-icon="settings" data-size="28"></span>
+    </div>
+    <h1>لوحة التحكم السحابية</h1>
+    <p>متصلة بقاعدة بيانات Supabase</p>
+    <div class="admin-user-info" id="adminUserInfo" style="margin-top:16px; text-align:right;">
+      <div class="admin-user-avatar" id="adminUserAvatar">م</div>
+      <div class="admin-user-details">
+        <div class="admin-user-name" id="adminUserName">المدير</div>
+        <div class="admin-user-email" id="adminUserEmail">وصول عبر الباب الخلفي</div>
+        <div class="admin-role-badge">
+          <span data-icon="shield" data-size="12"></span>
+          <span>مدير النظام</span>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-dark" id="logoutBtn" style="flex-shrink:0;">
+        <span data-icon="close" data-size="14"></span>
+        <span>خروج</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="alert-info">
+    <span data-icon="info" data-size="16"></span>
+    <div>
+      <strong>تنبيه:</strong> جميع التغييرات تُحفظ تلقائياً في السحابة. الصور تُضغط تلقائياً لتوفير المساحة.
+    </div>
+  </div>
+
+  <!-- الإحصائيات -->
+  <div class="stats-grid" id="adminStats">
+    <div class="stat-card">
+      <div class="stat-card-icon"><span data-icon="layers" data-size="20"></span></div>
+      <div class="stat-card-value" id="statCategories">0</div>
+      <div class="stat-card-label">الأقسام</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon"><span data-icon="package" data-size="20"></span></div>
+      <div class="stat-card-value" id="statItems">0</div>
+      <div class="stat-card-label">المنتجات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon"><span data-icon="tag" data-size="20"></span></div>
+      <div class="stat-card-value" id="statOffers">0</div>
+      <div class="stat-card-label">العروض</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon"><span data-icon="user" data-size="20"></span></div>
+      <div class="stat-card-value" id="statCustomers">0</div>
+      <div class="stat-card-label">العملاء</div>
+    </div>
+  </div>
+
+  <!-- التبويبات -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="categories">
+      <span data-icon="layers" data-size="16"></span>
+      <span>الأقسام</span>
+    </button>
+    <button class="admin-tab" data-tab="items">
+      <span data-icon="package" data-size="16"></span>
+      <span>المنتجات</span>
+    </button>
+    <button class="admin-tab" data-tab="offers">
+      <span data-icon="tag" data-size="16"></span>
+      <span>العروض</span>
+    </button>
+    <button class="admin-tab" data-tab="wallets">
+      <span data-icon="wallet" data-size="16"></span>
+      <span>المحافظ</span>
+    </button>
+    <button class="admin-tab" data-tab="topup">
+      <span data-icon="creditCard" data-size="16"></span>
+      <span>تغذية حسابي والاسترداد</span>
+    </button>
+    <button class="admin-tab" data-tab="contacts">
+      <span data-icon="phone" data-size="16"></span>
+      <span>التواصل</span>
+    </button>
+    <button class="admin-tab" data-tab="fields">
+      <span data-icon="list" data-size="16"></span>
+      <span>حقول</span>
+    </button>
+    <button class="admin-tab" data-tab="featured">
+      <span data-icon="star" data-size="16"></span>
+      <span>مميزة</span>
+    </button>
+    <button class="admin-tab" data-tab="customers">
+      <span data-icon="shield" data-size="16"></span>
+      <span>إدارة العمليات والتوثيق والطلبات</span>
+    </button>
+    <button class="admin-tab" data-tab="reviews">
+      <span data-icon="star" data-size="16"></span>
+      <span>التعليقات</span>
+    </button>
+    <button class="admin-tab" data-tab="settings">
+      <span data-icon="cog" data-size="16"></span>
+      <span>الإعدادات</span>
+    </button>
+    <button class="admin-tab" data-tab="backup">
+      <span data-icon="cloud" data-size="16"></span>
+      <span>حفظ</span>
+    </button>
+  </div>
+
+  <!-- ===== تبويب الأقسام ===== -->
+  <div class="admin-section active" id="tab-categories">
+    <div class="admin-form">
+      <h3><span data-icon="plus" data-size="16"></span> إضافة قسم جديد</h3>
+      <form id="addCategoryForm">
+        <div class="form-group">
+          <label class="form-label">اسم القسم <span class="required">*</span></label>
+          <input type="text" id="newCatName" class="form-input" required minlength="2" maxlength="100" placeholder="مثال: شحن ألعاب">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف <span class="required">*</span></label>
+          <textarea id="newCatDesc" class="form-input" required minlength="5" maxlength="500" rows="2" placeholder="وصف مختصر للقسم..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">صورة القسم</label>
+          <label class="upload-area" for="newCatImage">
+            <span data-icon="upload" data-size="24"></span>
+            <p>اضغط لاختيار صورة (سيتم ضغطها تلقائياً)</p>
+            <input type="file" id="newCatImage" accept="image/*">
+          </label>
+          <img id="newCatImagePreview" class="preview-image" style="display:none;">
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>إضافة القسم للسحابة</span>
+        </button>
+      </form>
+    </div>
+
+    <h3 style="color:var(--gold); margin:20px 0 14px; display:flex; align-items:center; gap:8px;">
+      <span data-icon="layers" data-size="18"></span>
+      <span>الأقسام الحالية</span>
+    </h3>
+    <div id="categoriesList"></div>
+  </div>
+
+  <!-- ===== تبويب المنتجات ===== -->
+  <div class="admin-section" id="tab-items">
+    <div class="admin-form">
+      <h3><span data-icon="plus" data-size="16"></span> إضافة منتج جديد</h3>
+      <form id="addItemForm">
+        <div class="form-group">
+          <label class="form-label">القسم <span class="required">*</span></label>
+          <select id="addItemCategory" class="form-input" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اسم المنتج <span class="required">*</span></label>
+          <input type="text" id="newItemName" class="form-input" required minlength="2" maxlength="150" placeholder="مثال: شحن جواهر فري فاير">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف <span class="required">*</span></label>
+          <textarea id="newItemDesc" class="form-input" required minlength="5" maxlength="1000" rows="2" placeholder="وصف المنتج..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">صورة المنتج</label>
+          <label class="upload-area" for="newItemImage">
+            <span data-icon="upload" data-size="24"></span>
+            <p>اضغط لاختيار صورة (سيتم ضغطها تلقائياً)</p>
+            <input type="file" id="newItemImage" accept="image/*">
+          </label>
+          <img id="newItemImagePreview" class="preview-image" style="display:none;">
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>إضافة المنتج للسحابة</span>
+        </button>
+      </form>
+    </div>
+
+    <h3 style="color:var(--gold); margin:20px 0 14px; display:flex; align-items:center; gap:8px;">
+      <span data-icon="package" data-size="18"></span>
+      <span>إدارة المنتجات</span>
+    </h3>
+    <div id="itemsList"></div>
+  </div>
+
+  <!-- ===== تبويب العروض ===== -->
+  <div class="admin-section" id="tab-offers">
+    <div class="admin-form">
+      <h3><span data-icon="plus" data-size="16"></span> إضافة عرض جديد</h3>
+      <form id="addOfferForm">
+        <div class="admin-form-row">
+          <div class="form-group">
+            <label class="form-label">المنتج <span class="required">*</span></label>
+            <select id="addOfferItem" class="form-input" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">اسم العرض <span class="required">*</span></label>
+            <input type="text" id="newOfferName" class="form-input" required minlength="2" maxlength="100" placeholder="مثال: 100 جوهرة">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="form-group">
+            <label class="form-label">السعر الحالي (ريال يمني) <span class="required">*</span></label>
+            <input type="number" id="newOfferPrice" class="form-input" required min="0" step="1" placeholder="1000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">السعر القديم</label>
+            <input type="number" id="newOfferOldPrice" class="form-input" min="0" step="1" placeholder="1500">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف (اختياري)</label>
+          <textarea id="newOfferDesc" class="form-input" maxlength="500" rows="2" placeholder="وصف مختصر للعرض..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">العملة الأساسية <span class="required">*</span></label>
+          <select id="newOfferCurrency" class="form-input" required>
+            <option value="YER">ريال يمني (الأساس)</option>
+            <option value="SAR">ريال سعودي</option>
+            <option value="USD">دولار أمريكي</option>
+            <option value="AED">درهم إماراتي</option>
+          </select>
+          <p style="font-size:11px; color:var(--text-secondary); margin-top:6px;">
+            💡 السعر يُدخل بالعملة المحددة. سيتم تحويله تلقائياً للعملات الأخرى في الموقع.
+          </p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">صورة العرض</label>
+          <label class="upload-area" for="newOfferImage">
+            <span data-icon="upload" data-size="24"></span>
+            <p>اضغط لاختيار صورة (سيتم ضغطها تلقائياً)</p>
+            <input type="file" id="newOfferImage" accept="image/*">
+          </label>
+          <img id="newOfferImagePreview" class="preview-image" style="display:none;">
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>إضافة العرض للسحابة</span>
+        </button>
+      </form>
+    </div>
+
+    <h3 style="color:var(--gold); margin:20px 0 14px; display:flex; align-items:center; gap:8px;">
+      <span data-icon="tag" data-size="18"></span>
+      <span>إدارة العروض</span>
+    </h3>
+    <div id="offersList"></div>
+  </div>
+
+  <!-- ===== تبويب المحافظ ===== -->
+  <div class="admin-section" id="tab-wallets">
+    <div class="alert-info">
+      <span data-icon="info" data-size="16"></span>
+      <div>
+        قم بإضافة صور المحافظ وأرقام حساباتها ليظهر للعميل عند الشراء. يمكنك إضافة محافظ جديدة أو تعطيل الحالية.
+      </div>
+    </div>
+
+    <div class="admin-form">
+      <h3><span data-icon="plus" data-size="16"></span> إضافة محفظة جديدة</h3>
+      <form id="addWalletForm">
+        <div class="admin-form-row">
+          <div class="form-group">
+            <label class="form-label">اسم المحفظة <span class="required">*</span></label>
+            <input type="text" id="newWalletName" class="form-input" required minlength="2" maxlength="50" placeholder="مثال: محفظتي">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الحساب</label>
+            <input type="text" id="newWalletNumber" class="form-input" maxlength="50" placeholder="77XXXXXXX" dir="ltr" style="text-align:left;">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">صورة المحفظة</label>
+          <label class="upload-area" for="newWalletImage">
+            <span data-icon="upload" data-size="24"></span>
+            <p>اضغط لاختيار صورة (سيتم ضغطها تلقائياً)</p>
+            <input type="file" id="newWalletImage" accept="image/*">
+          </label>
+          <img id="newWalletImagePreview" class="preview-image" style="display:none;">
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>إضافة المحفظة</span>
+        </button>
+      </form>
+    </div>
+
+    <h3 style="color:var(--gold); margin:20px 0 14px; display:flex; align-items:center; gap:8px;">
+      <span data-icon="wallet" data-size="18"></span>
+      <span>إدارة المحافظ الإلكترونية</span>
+    </h3>
+    <div id="walletsList"></div>
+  </div>
+
+  <!-- ===== تبويب جهات التواصل ===== -->
+  <div class="admin-section" id="tab-contacts">
+
+    <!-- أزرار "تواصل معنا" (المنصات) -->
+    <div class="admin-form">
+      <h3><span data-icon="globe" data-size="16"></span> أزرار "تواصل معنا"</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        تحكم كامل بقائمة قنوات وروابط الدعم التي تظهر عند الضغط على زر الدعم الثابت أو العائم في الموقع: يمكنك إضافة أي رقم أو رابط أو قناة، وتحديد الأيقونة والاسم وطريقة التحويل إلى أين سيتم تحويل العميل عند الضغط.
+      </p>
+      <label class="currency-toggle" style="margin-bottom:14px;">
+        <input type="checkbox" id="settingsContactPlatformsEnabled" checked>
+        <span>تفعيل عرض قسم "تواصل معنا"</span>
+      </label>
+      <div class="form-group">
+        <label class="form-label">عنوان القسم</label>
+        <input type="text" id="settingsContactPlatformsTitle" class="form-input" maxlength="60" placeholder="تواصل معنا">
+      </div>
+      <div id="platformsList"></div>
+      <button class="btn btn-outline btn-full" id="addPlatformBtn" style="margin-top:10px;">
+        <span data-icon="plus" data-size="14"></span>
+        <span>+ إضافة زر تواصل</span>
+      </button>
+      <button class="btn btn-gold btn-full" id="savePlatformsBtn" style="margin-top:10px;">
+        <span data-icon="save" data-size="16"></span>
+        <span>حفظ أزرار "تواصل معنا"</span>
+      </button>
+    </div>
+
+    <!-- جهات التواصل (بطاقات + الفوتر) -->
+    <div class="admin-form">
+      <h3><span data-icon="phone" data-size="16"></span> جهات التواصل (البطاقات والفوتر)</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        هذه الجهات تظهر كبطاقات في قسم "قنوات الدعم الرسمية" وفي تذييل الصفحة. يمكنك إضافة أرقام هواتف أو روابط أو واتساب أو بريد إلكتروني.
+      </p>
+      <div id="contactsList"></div>
+      <button class="btn btn-outline btn-full" id="addContactBtn" style="margin-top:10px;">
+        <span data-icon="plus" data-size="14"></span>
+        <span>+ إضافة جهة اتصال</span>
+      </button>
+      <button class="btn btn-gold btn-full" id="saveContactsBtn" style="margin-top:10px;">
+        <span data-icon="save" data-size="16"></span>
+        <span>حفظ جهات التواصل</span>
+      </button>
+    </div>
+
+    <!-- أرقام التواصل الرسمية القابلة للإضافة والحذف -->
+    <div class="admin-form">
+      <h3><span data-icon="phone" data-size="16"></span> أرقام التواصل الرسمية الإضافية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">أضف أي رقم أو بريد أو رابط رسمي. تظهر التغييرات مباشرة في قنوات الدعم بالموقع.</p>
+      <div id="officialContactsList"></div>
+      <button type="button" class="btn btn-outline btn-full" id="addOfficialContactBtn" style="margin-top:10px;">
+        <span data-icon="plus" data-size="14"></span><span>إضافة رقم/جهة رسمية جديدة</span>
+      </button>
+    </div>
+
+    <!-- حقول الدعم الرسمية القديمة للتوافق مع البيانات الحالية -->
+    <div class="admin-form">
+      <h3><span data-icon="settings" data-size="16"></span> أرقام التواصل الرسمية الأساسية</h3>
+      <form id="contactNumbersForm">
+        <div class="form-group">
+          <label class="form-label">رقم الواتساب الرئيسي (للدعم)</label>
+          <input type="tel" id="settingsWhatsapp" class="form-input" dir="ltr" style="text-align:left;" maxlength="20" placeholder="967XXXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رقم خدمة العملاء</label>
+          <input type="tel" id="settingsSupport" class="form-input" dir="ltr" style="text-align:left;" maxlength="20" placeholder="967XXXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رقم الإدارة</label>
+          <input type="tel" id="settingsAdmin" class="form-input" dir="ltr" style="text-align:left;" maxlength="20" placeholder="967XXXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رابط قناة الواتساب الرسمية</label>
+          <input type="url" id="settingsChannel" class="form-input" dir="ltr" style="text-align:left;" maxlength="300" placeholder="https://whatsapp.com/channel/...">
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>حفظ أرقام التواصل</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== تبويب الحقول المخصصة ===== -->
+  <div class="admin-section" id="tab-fields">
+    <div class="admin-form">
+      <h3><span data-icon="list" data-size="16"></span> حقول الصفحة الرئيسية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        هذه الحقول تظهر في الصفحة الرئيسية كبطاقات معلومات.
+      </p>
+      <div id="customFieldsList"></div>
+      <button class="btn btn-outline btn-full" id="addFieldBtn" style="margin-top:10px;">
+        <span data-icon="plus" data-size="14"></span>
+        <span>+ إضافة حقل</span>
+      </button>
+      <button class="btn btn-gold btn-full" id="saveFieldsBtn" style="margin-top:10px;">
+        <span data-icon="save" data-size="16"></span>
+        <span>حفظ الحقول</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== تبويب العروض المميزة ===== -->
+  <div class="admin-section" id="tab-featured">
+    <div class="admin-form">
+      <h3><span data-icon="star" data-size="16"></span> العروض المميزة</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        اختر العروض أو المنتجات التي تريد إبرازها في الصفحة الرئيسية.
+      </p>
+      <div class="admin-form-row" style="align-items:end;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="featuredSectionTitle">اسم قسم العروض المميزة</label>
+          <input type="text" id="featuredSectionTitle" class="form-input" maxlength="120" placeholder="العروض المميزة">
+        </div>
+        <button type="button" class="btn btn-outline" id="saveFeaturedTitleBtn">حفظ اسم القسم</button>
+      </div>
+      <p class="form-hint" style="margin:8px 0 14px;">يمكنك السحب والإفلات لتغيير ترتيب العناصر المميزة.</p>
+      <div id="featuredList" class="admin-sortable-list"></div>
+      <div class="form-group" style="margin-top:14px;">
+        <label class="form-label">+ اختيار عرض/منتج مميز</label>
+        <select id="addFeaturedSelect" class="form-input">
+          <option value="">-- اختر من القائمة --</option>
+        </select>
+      </div>
+      <button class="btn btn-gold btn-full" id="addFeaturedBtn">
+        <span data-icon="plus" data-size="14"></span>
+        <span>إضافة للمميزة</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== تبويب العمليات والعملاء ===== -->
+  <div class="admin-section" id="tab-customers">
+    <div class="admin-form">
+      <h3><span data-icon="shield" data-size="16"></span> التحكم الكامل بصفحة العمليات وتوثيق الحسابات والطلبات السرية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        جميع الحسابات المسجلة في المتجر وطلبات كل مستخدم. يتم هنا التحقق من كلمات المرور الطويلة السرية المستلمة عبر الواتساب ومطابقة العروض وتأكيد الحسابات.
+      </p>
+
+      <div style="background:rgba(255,215,0,0.08); border:1px solid var(--gold); padding:16px; border-radius:14px; margin-bottom:20px;">
+        <h4 style="color:var(--gold); margin-bottom:8px; display:flex; align-items:center; gap:8px; font-size:15px;">
+          <span>🔍</span> حقل المطابقة والتحقق السريع (من رسائل واتساب)
+        </h4>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px; line-height:1.6;">
+          الصق كلمة المرور الخاصة بالحساب (HUD-ACC-...) أو كلمة المرور الخاصة بالعرض (HUD-ORD-...) المستلمة في الواتساب للتحقق مما إذا كان الحساب والعرض موجودين:
+        </p>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="adminVerificationInput" class="form-input" placeholder="الصق كلمة مرور الحساب أو كلمة مرور العرض أو اسم المستخدم..." style="width:100%; font-family:monospace; direction:ltr; text-align:left; border-color:var(--gold);">
+          <button type="button" class="btn btn-gold" id="clearCustomerSearchBtn">مسح</button>
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-full" id="refreshCustomersBtn" style="margin-bottom:14px;">
+        <span data-icon="refresh" data-size="14"></span>
+        <span>تحديث قائمة الحسابات والطلبات</span>
+      </button>
+      <div id="customersList"></div>
+    </div>
+  </div>
+
+  <!-- ===== تبويب التعليقات ===== -->
+  <div class="admin-section" id="tab-reviews">
+    <div class="admin-form">
+      <h3><span data-icon="star" data-size="16"></span> سجل تعليقات الصفحة الرئيسية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        كل التعليقات التي تظهر في الصفحة الرئيسية محفوظة هنا. يمكنك تعديل محتوى أي تعليق، إخفاءه (دون حذف)، أو حذفه نهائياً. أي تغيير يظهر فوراً لجميع الزوار.
+      </p>
+      <button class="btn btn-gold btn-full" id="refreshReviewsBtn" style="margin-bottom:14px;">
+        <span data-icon="refresh" data-size="14"></span>
+        <span>تحديث قائمة التعليقات</span>
+      </button>
+      <div id="adminReviewsList"></div>
+    </div>
+  </div>
+
+  <!-- ===== تبويب الإعدادات ===== -->
+  <div class="admin-section" id="tab-settings">
+    <!-- إعدادات العملة -->
+    <div class="admin-form">
+      <h3><span data-icon="wallet" data-size="16"></span> إعدادات العملة</h3>
+      <form id="currencySettingsForm">
+        <div class="form-group">
+          <label class="form-label">وضع عرض الأسعار</label>
+          <select id="settingsCurrencyMode" class="form-input">
+            <option value="single">عملة واحدة فقط</option>
+            <option value="multi">جميع العملات معاً</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">العملة الأساسية</label>
+          <select id="settingsDefaultCurrency" class="form-input">
+            <option value="YER">🇾🇪 ريال يمني</option>
+            <option value="SAR">🇸🇦 ريال سعودي</option>
+            <option value="USD">🇺🇸 دولار أمريكي</option>
+            <option value="AED">🇦🇪 درهم إماراتي</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">العملات النشطة</label>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="currency-toggle">
+              <input type="checkbox" value="YER" class="active-currency-check" checked>
+              <span>🇾🇪 ريال يمني</span>
+            </label>
+            <label class="currency-toggle">
+              <input type="checkbox" value="SAR" class="active-currency-check" checked>
+              <span>🇸🇦 ريال سعودي</span>
+            </label>
+            <label class="currency-toggle">
+              <input type="checkbox" value="USD" class="active-currency-check" checked>
+              <span>🇺🇸 دولار</span>
+            </label>
+            <label class="currency-toggle">
+              <input type="checkbox" value="AED" class="active-currency-check" checked>
+              <span>🇦🇪 درهم</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">أسعار الصرف التقريبية (مقابل 100 ريال يمني)</label>
+          <div class="admin-form-row">
+            <div>
+              <label style="font-size:11px; color:var(--text-secondary);">ريال سعودي (SAR)</label>
+              <input type="number" id="rateSAR" class="form-input" step="0.0001" min="0" value="0.71">
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--text-secondary);">دولار (USD)</label>
+              <input type="number" id="rateUSD" class="form-input" step="0.0001" min="0" value="0.18">
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <label style="font-size:11px; color:var(--text-secondary);">درهم (AED)</label>
+            <input type="number" id="rateAED" class="form-input" step="0.0001" min="0" value="0.66">
+          </div>
+          <p style="font-size:11px; color:var(--text-secondary); margin-top:6px;">
+            أدخل قيمة كل عملة مقابل <b>100 ريال يمني</b>. مثال: 100 ر.ي = 0.71 ريال سعودي = 0.18 دولار.
+          </p>
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>حفظ إعدادات العملة</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- إعدادات العرض -->
+    <div class="admin-form">
+      <h3><span data-icon="grid" data-size="16"></span> إعدادات العرض</h3>
+      <form id="displaySettingsForm">
+        <div class="form-group">
+          <label class="form-label">عدد المنتجات في الصفحة</label>
+          <input type="number" id="settingsOffersPerPage" class="form-input" min="4" max="50" value="10">
+          <p style="font-size:11px; color:var(--text-secondary); margin-top:4px;">
+            عدد المنتجات المعروضة قبل زر "تحميل المزيد"
+          </p>
+        </div>
+        <label class="currency-toggle" style="margin-bottom:14px;">
+          <input type="checkbox" id="settingsHideUnavailable">
+          <span>إخفاء المنتجات غير المتوفرة</span>
+        </label>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>حفظ إعدادات العرض</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- نبذة هود كوم / من نحن -->
+    <div class="admin-form">
+      <h3><span data-icon="info" data-size="16"></span> نبذة هود كوم ("من نحن")</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        تحكم كامل بقسم "نبذة هود كوم": العنوان، النص، أسطر المعلومات (الإدارة/الدعم...)، التفعيل والمكان.
+      </p>
+      <form id="aboutSettingsForm">
+        <label class="currency-toggle" style="margin-bottom:14px;">
+          <input type="checkbox" id="settingsAboutEnabled" checked>
+          <span>تفعيل عرض قسم النبذة في الموقع</span>
+        </label>
+        <div class="form-group">
+          <label class="form-label">عنوان القسم</label>
+          <input type="text" id="settingsAboutTitle" class="form-input" maxlength="60" placeholder="هود كوم">
+        </div>
+        <div class="form-group">
+          <label class="form-label">نص النبذة</label>
+          <textarea id="settingsAboutText" class="form-input" rows="6" maxlength="2000" placeholder="اكتب نصاً تعريفياً بالمتجر..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">مكان ظهور القسم</label>
+          <select id="settingsAboutPosition" class="form-input">
+            <option value="top">أعلى الصفحة (بعد الهيرو)</option>
+            <option value="middle" selected>وسط الصفحة (بين المنتجات والأقسام الأخرى)</option>
+            <option value="bottom">أسفل الصفحة (قبل الفوتر)</option>
+          </select>
+        </div>
+
+        <label class="form-label" style="display:block; margin-bottom:8px;">أسطر المعلومات (أيقونة + عنوان + قيمة)</label>
+        <div id="aboutLinesList"></div>
+        <button type="button" class="btn btn-outline btn-full" id="addAboutLineBtn" style="margin:8px 0 14px;">
+          <span data-icon="plus" data-size="14"></span>
+          <span>+ إضافة سطر معلومات</span>
+        </button>
+
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>حفظ نبذة هود كوم</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- حالة الإدارة — مؤشر التوفر الفوري -->
+    <div class="admin-form" style="border:2px solid var(--gold); background:linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));">
+      <h3><span data-icon="shield" data-size="16"></span> حالة الإدارة — مؤشر التوفر</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px; line-height:1.8;">
+        هذا المفتاح يتحكم في زر مؤشر حالة الإدارة الذي يظهر لجميع المستخدمين في كل صفحات الموقع.
+        عند التفعيل، يتحول الزر إلى أخضر ويعرض "الإدارة متاحة الآن"، وعند التعطيل يتحول إلى أحمر ويعرض "الإدارة غير متاحة".
+        التغيير ينعكس <b style="color:var(--gold);">لحظياً</b> على جميع الأجهزة والصفحات.
+      </p>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); border-radius:14px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="adminAvailPreviewDot" style="width:14px;height:14px;border-radius:50%;background:#FF3D57;transition:background 0.3s, box-shadow 0.3s;"></div>
+          <div>
+            <div style="font-weight:800; font-size:14px; color:var(--text-primary);">مؤشر توفر الإدارة</div>
+            <div id="adminAvailPreviewText" style="font-size:12px; color:var(--text-secondary); margin-top:2px;">الإدارة غير متاحة</div>
+          </div>
+        </div>
+        <label style="position:relative; display:inline-block; width:56px; height:30px; cursor:pointer;">
+          <input type="checkbox" id="settingsAdminAvailability" data-setting="adminAvailability" aria-label="تحديد ما إذا كانت الإدارة متاحة الآن" style="opacity:0; width:0; height:0;">
+          <span id="adminAvailToggleTrack" style="position:absolute;inset:0;background:#444;border-radius:30px;transition:background 0.3s;"></span>
+          <span id="adminAvailToggleThumb" style="position:absolute;top:3px;left:3px;width:24px;height:24px;background:#fff;border-radius:50%;transition:transform 0.3s, background 0.3s;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></span>
+        </label>
+      </div>
+      <button type="button" id="saveAdminAvailabilityBtn" data-action="save-admin-availability" class="btn btn-gold btn-full">
+        <span data-icon="save" data-size="16"></span>
+        <span>حفظ حالة الإدارة</span>
+      </button>
+    </div>
+
+    <!-- إعدادات عامة -->
+    <div class="admin-form">
+      <h3><span data-icon="cog" data-size="16"></span> إعدادات عامة</h3>
+      <form id="generalSettingsForm">
+        <label class="currency-toggle" style="margin-bottom:14px;">
+          <input type="checkbox" id="settingsWatermark" checked>
+          <span>تفعيل العلامة المائية على صور المنتجات والعروض</span>
+        </label>
+        <div class="form-group">
+          <label class="form-label">شفافية العلامة المائية</label>
+          <input type="range" id="settingsWatermarkOpacity" min="0" max="100" value="15">
+          <p style="font-size:11px; color:var(--text-secondary); margin-top:4px;">
+            القيمة الحالية: <span id="watermarkOpacityValue">15</span>%
+          </p>
+        </div>
+        <label class="currency-toggle" style="margin-bottom:14px;">
+          <input type="checkbox" id="settingsReturningCustomer" checked>
+          <span>تفعيل ميزة "العميل السابق"</span>
+        </label>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>حفظ الإعدادات العامة</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- إعدادات أحجام الصور - تحكم كامل -->
+    <div class="admin-form" style="border:2px solid var(--gold); background: linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));">
+      <h3><span data-icon="image" data-size="16"></span> إعدادات أحجام الصور - تحكم كامل بالموقع</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px; line-height:1.7;">
+        تحكم كامل بأحجام عرض جميع الصور في الموقع: صور الأقسام، المنتجات، العروض، اللوجو، وكل الصور. التغيير ينعكس <b style="color:var(--gold);">لحظياً</b> على جميع الصفحات والأجهزة.
+      </p>
+      <form id="imageSettingsForm">
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:14px;">
+          <h4 style="color:var(--gold); font-size:13px; margin-bottom:10px;">📦 صور المنتجات (Product Images)</h4>
+          <div class="admin-form-row">
+            <div class="form-group">
+              <label class="form-label">العرض (Width - px)</label>
+              <input type="number" id="settingsProductImageWidth" class="form-input" min="20" max="500" value="140">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الطول (Height - px)</label>
+              <input type="number" id="settingsProductImageHeight" class="form-input" min="20" max="500" value="130">
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:14px;">
+          <h4 style="color:var(--gold); font-size:13px; margin-bottom:10px;">📂 صور الأقسام (Category Images)</h4>
+          <div class="admin-form-row">
+            <div class="form-group">
+              <label class="form-label">العرض (Width - px)</label>
+              <input type="number" id="settingsCategoryImageWidth" class="form-input" min="20" max="500" value="110">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الطول (Height - px)</label>
+              <input type="number" id="settingsCategoryImageHeight" class="form-input" min="20" max="500" value="110">
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:14px;">
+          <h4 style="color:var(--gold); font-size:13px; margin-bottom:10px;">🏷️ صور العروض (Offer Images)</h4>
+          <div class="admin-form-row">
+            <div class="form-group">
+              <label class="form-label">العرض (Width - px)</label>
+              <input type="number" id="settingsOfferImageWidth" class="form-input" min="20" max="300" value="60">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الطول (Height - px)</label>
+              <input type="number" id="settingsOfferImageHeight" class="form-input" min="20" max="300" value="60">
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:14px;">
+          <h4 style="color:var(--gold); font-size:13px; margin-bottom:10px;">🦸 شعار الهيرو (Hero Logo)</h4>
+          <div class="admin-form-row">
+            <div class="form-group">
+              <label class="form-label">العرض (Width - px)</label>
+              <input type="number" id="settingsHeroLogoWidth" class="form-input" min="50" max="800" value="320">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الطول (Height - px)</label>
+              <input type="number" id="settingsHeroLogoHeight" class="form-input" min="50" max="800" value="320">
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:14px;">
+          <h4 style="color:var(--gold); font-size:13px; margin-bottom:10px;">🎨 إعدادات عامة للصور</h4>
+          <div class="admin-form-row">
+            <div class="form-group">
+              <label class="form-label">نصف قطر الحواف (Border Radius - px)</label>
+              <input type="number" id="settingsImageBorderRadius" class="form-input" min="0" max="50" value="16">
+            </div>
+            <div class="form-group">
+              <label class="form-label">طريقة ملء الصورة (Object Fit)</label>
+              <select id="settingsImageFitMode" class="form-input">
+                <option value="cover">تغطية (Cover) - قص الصورة</option>
+                <option value="contain">احتواء (Contain) - كاملة</option>
+                <option value="fill">ملء (Fill) - تمدد</option>
+                <option value="scale-down">تصغير (Scale-down)</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <div class="form-group">
+              <label class="form-label">جودة الصور (Quality %)</label>
+              <input type="number" id="settingsGeneralImageQuality" class="form-input" min="10" max="100" value="82">
+            </div>
+            <div class="form-group">
+              <label class="form-label">الحد الأقصى لعرض الصور العامة (%)</label>
+              <input type="number" id="settingsGeneralImageMaxWidth" class="form-input" min="10" max="100" value="100">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>💾 حفظ إعدادات أحجام الصور وتطبيقها فوراً</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- الباب الخلفي الخاص بالمدير -->
+    <div class="admin-form">
+      <h3><span data-icon="shield" data-size="16"></span> بيانات دخول لوحة التحكم (سرّية)</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        هذه هي بيانات الدخول الوحيدة التي تفتح لوحة التحكم. غيّرها بشكل دوري واحتفظ بها لنفسك فقط.
+        بعد الحفظ، أدخل هذا الاسم وهذه الكلمة في صفحة تسجيل الدخول العادية (login.html) في خانتي اسم المستخدم وكلمة المرور، وستُنقل مباشرة إلى هذه اللوحة من أي جهاز.
+      </p>
+      <form id="adminGateForm">
+        <div class="form-group">
+          <label class="form-label">اسم المستخدم الجديد</label>
+          <input type="text" id="gateNewUsername" class="form-input" autocomplete="off" placeholder="مثال: hood" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الجديدة</label>
+          <input type="text" id="gateNewPassword" class="form-input" autocomplete="off" placeholder="4 أحرف على الأقل" required>
+        </div>
+        <button type="submit" class="btn btn-gold btn-full">
+          <span data-icon="save" data-size="16"></span>
+          <span>حفظ بيانات دخول لوحة التحكم</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  
+    <!-- تنبيهات مهمة قبل الشراء - الافتراضية -->
+    <div class="admin-form">
+      <h3><span data-icon="alert" data-size="16"></span> تنبيهات مهمة قبل الشراء (الافتراضية)</h3>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">تظهر على جميع العروض التي لا تحتوي على تنبيهات خاصة.</p>
+      <div id="defaultPopupsList" style="background:#111;border:1px solid #333;border-radius:6px;padding:8px;max-height:200px;overflow:auto;margin-bottom:6px;font-size:12px;"></div>
+      <button type="button" id="addDefaultPopupBtn" class="btn btn-outline" style="width:100%;font-size:12px;padding:5px;margin-bottom:6px;">+ إضافة تنبيه افتراضي</button>
+      <button type="button" id="saveDefaultPopupsBtn" class="btn btn-gold btn-full" style="font-size:13px;">حفظ التنبيهات الافتراضية</button>
+    </div>
+
+<!-- ===== تبويب النسخ الاحتياطي ===== -->
+  
+  <!-- ===== تبويب تغذية حسابي والاسترداد ===== -->
+  <div class="admin-section" id="tab-topup">
+    
+    <!-- 1. معلومات التغذية الأساسية -->
+    <div class="admin-form" style="margin-bottom:24px;">
+      <h3><span data-icon="cog" data-size="16"></span> إعدادات معلومات حساب التغذية والاسترداد الأساسية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">تظهر هذه البيانات في أعلى صفحة تغذية حسابي عند طلب الإيداع</p>
+      
+      <div class="form-group">
+        <label class="form-label">اسم المستفيد / الحساب</label>
+        <input type="text" id="adminTopupNameInput" class="form-input" value="هود فيصل مصلح العماري">
+      </div>
+      <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">رقم الهاتف الأول (1)</label>
+          <input type="text" id="adminTopupPhone1Input" class="form-input" value="00967783708724">
+        </div>
+        <div class="form-group">
+          <label class="form-label">رقم الهاتف الآخر (2)</label>
+          <input type="text" id="adminTopupPhone2Input" class="form-input" value="00967717510727">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">تعليمات وتنبيهات طلب الإيداع</label>
+        <textarea id="adminTopupDepInstInput" class="form-input" rows="2">قم بتحويل المبلغ المطلوب إيداعه إلى أحد الحسابات أو الأرقام أدناه، ثم اختر المحفظة واملأ النموذج ليتم تغذية حسابك في أقرب وقت.</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">تعليمات وتنبيهات خدمة الاسترداد</label>
+        <textarea id="adminTopupWthInstInput" class="form-input" rows="2">اختر طريقة السحب المناسبة واضغط عليها لتقديم طلب استرداد رصيدك إلى محفظتك أو حسابك الخارجي.</textarea>
+      </div>
+      <button type="button" id="saveTopupSettingsBtn" class="btn btn-gold" style="width:100%; font-weight:900;">
+        <span data-icon="save" data-size="16"></span> حفظ إعدادات حساب التغذية
+      </button>
+    </div>
+
+    <!-- 2. إضافة رصيد مباشر فوري لعميل -->
+    <div class="admin-form" style="margin-bottom:24px; border-color:#00E676;">
+      <h3 style="color:#00E676;"><span data-icon="plus" data-size="16"></span> تغذية رصيد عميل مباشر (إيداع فوري من الإدارة)</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">يتيح لك هذا الزر شحن رصيد أي عميل أو العميل الحالي في الموقع مباشرة وبدون طلب</p>
+      
+      <div class="form-row" style="display:grid; grid-template-columns:2fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">معرف العميل (أو اكتب guest / البريد / الهاتف)</label>
+          <input type="text" id="adminInstantUserInput" class="form-input" placeholder="مثال: guest أو uid العميل">
+        </div>
+        <div class="form-group">
+          <label class="form-label">المبلغ المضاف (ر.ي)</label>
+          <input type="number" id="adminInstantAmountInput" class="form-input" placeholder="مثال: 5000">
+        </div>
+      </div>
+      <button type="button" id="adminInstantCreditBtn" class="btn" style="background:#00E676; color:#000; font-weight:900; width:100%;">
+        <span data-icon="check" data-size="16"></span> ⚡ إضافة الرصيد لحساب العميل فوراً
+      </button>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 3. إدارة الخدمات الديناميكية (تغذية + استرداد)                        -->
+    <!-- ================================================================= -->
+    <div class="admin-form" style="margin-bottom:24px; border-color:var(--gold);">
+      <h3 style="color:var(--gold);"><span data-icon="grid" data-size="16"></span> إدارة الخدمات الديناميكية (تغذية حسابي + خدمة الاسترداد)</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        هذه هي الخدمات (كريمي، جيب، جوالي، كاش، ...) التي ستظهر لعميلك على شكل مربعات في صفحة تغذية حسابي وخدمة الاسترداد.
+        كل خدمة لها اسم، صورة، حالة (مفعل/معطل)، ومجموعة حقول ديناميكية يعبّئها العميل عند الضغط عليها.
+      </p>
+
+      <!-- تبديل بين عرض التغذية والاسترداد -->
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button type="button" id="svcTabDeposit" class="btn" style="flex:1; background:var(--gold); color:#000; font-weight:900;">
+          📥 خدمات التغذية
+        </button>
+        <button type="button" id="svcTabWithdraw" class="btn" style="flex:1; background:#222; color:#fff; border:1px solid #444;">
+          📤 خدمات الاسترداد
+        </button>
+      </div>
+
+      <!-- جدول الخدمات -->
+      <div id="adminServicesList" style="margin-bottom:16px;"></div>
+
+      <!-- إضافة خدمة جديدة -->
+      <div style="background:#111; border:1px solid #333; border-radius:12px; padding:16px;">
+        <h4 style="color:var(--gold); font-size:14px; margin-bottom:12px;">➕ إضافة خدمة جديدة (<span id="newSvcTypeLabel">للتغذية</span>)</h4>
+        <div class="form-group">
+          <label class="form-label">اسم الخدمة (مثلاً: جيب، كريمي، كاش...)</label>
+          <input type="text" id="newSvcName" class="form-input" placeholder="اسم الخدمة">
+        </div>
+        <div class="form-group">
+          <label class="form-label">صورة الخدمة</label>
+          <label class="upload-area" for="newSvcImageFile" style="cursor:pointer;">
+            <span data-icon="upload" data-size="24"></span>
+            <p>اضغط لاختيار صورة (اختياري)</p>
+            <input type="file" id="newSvcImageFile" accept="image/*" style="display:none;">
+          </label>
+          <input type="text" id="newSvcImage" class="form-input" placeholder="أو الصق رابط صورة مباشرة" style="margin-top:8px;">
+          <img id="newSvcImagePreview" style="max-height:80px; border-radius:8px; margin-top:8px; display:none;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">وصف الخدمة (اختياري - يظهر داخل النموذج)</label>
+          <textarea id="newSvcDesc" class="form-input" rows="2" placeholder="مثلاً: قم بتحويل المبلغ إلى محفظة جيب ثم عبّئ البيانات..."></textarea>
+        </div>
+        <label class="admin-check" style="margin:0 0 12px;"><input type="checkbox" id="newSvcEnabled" checked> إظهار الخدمة للمستخدمين فوراً</label>
+        <button type="button" id="addServiceBtn" class="btn btn-outline" style="width:100%; border-color:var(--gold); color:var(--gold); font-weight:bold;">
+          + إضافة الخدمة
+        </button>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 3B. محرر حقول الخدمة (يفتح عبر زر "إدارة الحقول")                    -->
+    <!-- ================================================================= -->
+    <div id="fieldsEditorPanel" style="display:none; background:#0d0d0d; border:2px solid #00E676; border-radius:14px; padding:16px; margin-bottom:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="color:#00E676; margin:0;"><span data-icon="list" data-size="16"></span> محرر الحقول الديناميكية للخدمة: <span id="editorSvcName" style="color:var(--gold);"></span></h3>
+        <button type="button" class="btn" style="background:#333; color:#fff; padding:6px 12px;">إغلاق ×</button>
+      </div>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        أضف الحقول التي يجب على العميل تعبئتها عند الضغط على هذه الخدمة (رقم الحساب، رقم الهاتف، المبلغ، ملاحظات، ...).
+      </p>
+
+      <div id="editorFieldsList" style="margin-bottom:14px;"></div>
+
+      <div style="background:#111; border:1px solid #333; border-radius:12px; padding:14px;">
+        <h4 style="color:#00E676; font-size:13px; margin-bottom:10px;">➕ إضافة حقل جديد</h4>
+        <div class="form-row" style="display:grid; grid-template-columns:2fr 1fr; gap:10px;">
+          <div class="form-group">
+            <label class="form-label">اسم الحقل (placeholder / عنوان)</label>
+            <input type="text" id="newFldLabel" class="form-input" placeholder="مثال: رقم الحساب">
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع الحقل</label>
+            <select id="newFldType" class="form-input">
+              <option value="text">نص</option>
+              <option value="number">رقم</option>
+              <option value="tel">هاتف</option>
+              <option value="email">بريد إلكتروني</option>
+              <option value="textarea">ملاحظات / نص طويل</option>
+              <option value="select">قائمة منسدلة</option>
+              <option value="file">صورة / ملف</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">النص التوضيحي (placeholder داخل الحقل)</label>
+          <input type="text" id="newFldPlaceholder" class="form-input" placeholder="نص يظهر داخل الحقل">
+        </div>
+        <div class="form-group" id="newFldOptionsGroup" style="display:none;">
+          <label class="form-label">خيارات القائمة (افصل بينها بفاصلة ,)</label>
+          <input type="text" id="newFldOptions" class="form-input" placeholder="خيار 1, خيار 2, خيار 3">
+        </div>
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="newFldRequired" checked>
+            <span>حقل إجباري (لا يمكن إرسال النموذج بدونه)</span>
+          </label>
+        </div>
+        <button type="button" class="btn" style="width:100%; background:#00E676; color:#000; font-weight:bold;">
+          + إضافة الحقل للخدمة
+        </button>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 3C. إدارة أرصدة العملاء المسجّلين                                     -->
+    <!-- ================================================================= -->
+    <div class="admin-form" style="margin-bottom:24px; border-color:#3498db;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="color:#3498db;"><span data-icon="shield" data-size="16"></span> إدارة أرصدة العملاء المسجلين</h3>
+        <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">🔄 تحديث</button>
+      </div>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">
+        قائمة كل العملاء المسجلين مع رصيدهم الحالي. يمكنك تعديل الرصيد يدوياً (زيادة أو خصم أو تعيين قيمة جديدة).
+      </p>
+      <div class="form-group">
+        <input type="text" id="userBalanceSearchInput" class="form-input" placeholder="🔎 ابحث بالبريد أو الاسم أو المعرف...">
+      </div>
+      <div id="adminUserBalancesList" style="max-height:500px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- 4. إدارة طلبات التغذية والاسترداد المعلقة -->
+    <div class="admin-form" style="margin-bottom:24px;">
+      <h3><span data-icon="shield" data-size="16"></span> إدارة طلبات التغذية (الإيداع) والاسترداد المعلقة</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">وافق على طلبات الإيداع ليتم إضافة الرصيد لعميلك تلقائياً، أو وافق على طلبات سحب الرصيد</p>
+      
+      <div id="adminPendingTopupRequestsList">
+        <div style="text-align:center; padding:20px; color:#888;">جاري تحميل الطلبات المعلقة...</div>
+      </div>
+    </div>
+
+    <!-- 5. سجل جميع العمليات السابقة -->
+    <div class="admin-form">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3><span data-icon="list" data-size="16"></span> سجل جميع عمليات الإيداع والاسترداد المنجزة</h3>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;">🔄 تحديث</button>
+      </div>
+      <div id="adminCompletedTopupRequestsList" style="max-height:400px; overflow-y:auto;"></div>
+    </div>
+
+  </div>
+
+<div class="admin-section" id="tab-backup">
+    <div class="admin-form">
+      <h3><span data-icon="cloud" data-size="16"></span> تصدير نسخة احتياطية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        احفظ نسخة من بياناتك لاسترجاعها لاحقاً
+      </p>
+      <button class="btn btn-gold btn-full" id="exportDataBtn">
+        <span data-icon="copy" data-size="16"></span>
+        <span>نسخ البيانات للحافظة</span>
+      </button>
+      <textarea id="exportDataArea" class="form-input" rows="6" readonly style="margin-top:14px; font-family:monospace; font-size:11px;" placeholder="ستظهر البيانات هنا..."></textarea>
+    </div>
+
+    <div class="admin-form">
+      <h3><span data-icon="refresh" data-size="16"></span> استرجاع نسخة احتياطية</h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        ألصق هنا البيانات المحفوظة سابقاً
+      </p>
+      <textarea id="importDataArea" class="form-input" rows="6" placeholder="ألصق البيانات هنا..." style="font-family:monospace; font-size:11px;"></textarea>
+      <button class="btn btn-gold btn-full" id="importDataBtn" style="margin-top:14px;">
+        <span data-icon="cloud" data-size="16"></span>
+        <span>استرجاع البيانات</span>
+      </button>
+    </div>
+
+    <!-- منطقة الخطر -->
+    <div class="admin-danger-zone">
+      <h3>
+        <span data-icon="alert" data-size="18"></span>
+        <span>منطقة الخطر</span>
+      </h3>
+      <p>
+        حذف جميع البيانات نهائياً من السحابة. هذا الإجراء لا يمكن التراجع عنه!
+      </p>
+      <button class="btn-danger" id="deleteAllDataBtn">
+        <span data-icon="trash" data-size="16"></span>
+        <span>حذف جميع البيانات</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== نوافذ التأكيد ===== -->
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-modal-box">
+    <div class="confirm-modal-icon">
+      <span data-icon="alert" data-size="28"></span>
+    </div>
+    <h3 class="confirm-modal-title" id="confirmTitle">هل أنت متأكد؟</h3>
+    <p class="confirm-modal-desc" id="confirmDesc">هذا الإجراء لا يمكن التراجع عنه.</p>
+    <div class="confirm-modal-actions">
+      <button class="btn btn-dark" id="confirmCancelBtn">إلغاء</button>
+      <button class="btn btn-danger" id="confirmOkBtn" style="background:var(--danger);">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== نافذة التعديل العامة ===== -->
+<div class="confirm-modal admin-edit-modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" aria-hidden="true">
+  <div class="confirm-modal-box admin-edit-modal-box">
+    <h3 class="confirm-modal-title" id="editModalTitle" style="color:var(--gold);">تعديل</h3>
+    <div id="editModalBody" class="admin-edit-modal-body"></div>
+    <div class="confirm-modal-actions">
+      <button type="button" class="btn btn-dark" id="editCancelBtn">إلغاء</button>
+      <button type="button" class="btn btn-gold" id="editSaveBtn">حفظ التغييرات</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast" role="alert" aria-live="polite">
+  <div class="toast-icon"><span data-icon="check" data-size="18"></span></div>
+  <span id="toastText"></span>
+</div>
+
+<!-- ===== Scripts ===== -->
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فحص Supabase - هود كوم</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #0a0a0a; color: #eee; padding: 20px; direction: rtl; }
+  h2 { color: #FFD700; }
+  .box { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 16px; margin: 12px 0; }
+  .ok { color: #2ecc71; font-weight: bold; }
+  .err { color: #e74c3c; font-weight: bold; }
+  .warn { color: #f39c12; font-weight: bold; }
+  button { background: #FFD700; color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 4px; }
+  pre { background: #111; padding: 12px; border-radius: 8px; font-size: 12px; overflow: auto; white-space: pre-wrap; word-break: break-all; }
+  input { background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 8px 12px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-size: 13px; }
+</style>
+</head>
+<body>
+<h2>🔍 أداة فحص Supabase — هود كوم</h2>
+<p style="color:#aaa; font-size:13px;">هذا الملف مؤقت للتشخيص فقط. احذفه بعد الإصلاح.</p>
+
+<div class="box">
+  <h3>📋 معلومات الإعداد الحالي</h3>
+  <div id="configInfo">جاري التحقق...</div>
+</div>
+
+<div class="box">
+  <h3>🔌 اختبار الاتصال بـ Supabase</h3>
+  <button>اختبر الاتصال الآن</button>
+  <div id="connResult" style="margin-top:10px;"></div>
+</div>
+
+<div class="box">
+  <h3>📂 اختبار قراءة البيانات من hud_docs</h3>
+  <button>قراءة البيانات</button>
+  <div id="readResult" style="margin-top:10px;"></div>
+</div>
+
+<div class="box">
+  <h3>💾 اختبار حفظ بيانات تجريبية</h3>
+  <button>حفظ بيانات تجريبية</button>
+  <div id="writeResult" style="margin-top:10px;"></div>
+</div>
+
+<div class="box">
+  <h3>🗑️ حذف البيانات التجريبية</h3>
+  <button>حذف البيانات التجريبية</button>
+  <div id="deleteResult" style="margin-top:10px;"></div>
+</div>
+
+<div class="box">
+  <h3>📝 سجل العمليات</h3>
+  <pre id="log">---</pre>
+</div>
+
+
+
+
+
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
