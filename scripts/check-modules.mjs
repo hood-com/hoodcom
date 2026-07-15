@@ -12,7 +12,7 @@ for (const file of files) {
   if (syntax.status) { console.error(syntax.stderr); failures++; }
   const source = await readFile(file, 'utf8');
   for (const match of source.matchAll(/(?:from\s+|import\s*\()(['"])(\.{1,2}\/[^'"]+)\1/gu)) {
-    try { await access(resolve(dirname(file), match[2])); }
+    try { await access(resolve(dirname(file), match[2].split('?')[0])); }
     catch { console.error(`Missing import: ${file} -> ${match[2]}`); failures++; }
   }
 }

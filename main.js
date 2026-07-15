@@ -1,12 +1,12 @@
 const pageLoaders = Object.freeze({
-  'index.html': () => import('./pages/index.js'),
-  'login.html': () => import('./pages/login.js'),
-  'admin.html': () => import('./pages/admin.js'),
-  'deposit.html': () => import('./pages/deposit.js'),
-  'account.html': () => import('./pages/account.js'),
-  'category.html': () => import('./pages/category.js'),
-  'reports.html': () => import('./pages/reports.js'),
-  'debug-test.html': () => import('./pages/debug.js')
+  'index.html': () => import('./pages/index.js?v=20260715-3'),
+  'login.html': () => import('./pages/login.js?v=20260715-3'),
+  'admin.html': () => import('./pages/admin.js?v=20260715-3'),
+  'deposit.html': () => import('./pages/deposit.js?v=20260715-3'),
+  'account.html': () => import('./pages/account.js?v=20260715-3'),
+  'category.html': () => import('./pages/category.js?v=20260715-3'),
+  'reports.html': () => import('./pages/reports.js?v=20260715-3'),
+  'debug-test.html': () => import('./pages/debug.js?v=20260715-3')
 });
 
 export const getCurrentPage = (pathname = globalThis.location?.pathname || '') =>
