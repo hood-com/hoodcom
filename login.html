@@ -117,15 +117,15 @@ select.form-input:disabled{opacity:0.5}
       <div class="form-group">
         <label class="form-label" for="loginUsername">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span>رقم الهاتف أو بريد المدير</span>
+          <span>رقم الهاتف</span>
           <span class="required">*</span>
         </label>
         <div class="form-input-wrapper">
-          <input type="text" id="loginUsername" class="form-input" placeholder="أدخل رقم الهاتف، أو بريد المدير الإلكتروني" required autocomplete="username" aria-label="اسم المستخدم">
+          <input type="text" id="loginUsername" class="form-input" placeholder="أدخل رقم الهاتف المسجل بدون رمز الدولة" required autocomplete="username" aria-label="اسم المستخدم">
         </div>
         <div class="form-error" id="loginUsernameError">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>يرجى إدخال رقم الهاتف أو بريد المدير</span>
+          <span>يرجى إدخال رقم الهاتف</span>
         </div>
       </div>
 
@@ -424,6 +424,6 @@ select.form-input:disabled{opacity:0.5}
 
 <!-- Legacy compatibility facade: auth-service.js replaces its methods with the canonical ES module implementation. -->
 <script src="admin-gate.legacy.js"></script>
-<script type="module" src="main.js?v=20260715-3"></script>
+<script type="module" src="main.js?v=20260715-4"></script>
 </body>
 </html>

@@ -587,7 +587,7 @@ const bindAddForms = () => {
     event.preventDefault();
     try { await saveAction(buttonFor(event, '[type="submit"]'), async () => {
       await saveCategoryToFirebase({ id: createId('cat'), name: sanitizeInput(byId('newCatName').value, 120), description: sanitizeInput(byId('newCatDesc').value, 1000), image: await compressedImageFromInput('newCatImage'), order: categories.length + 1, items: [] });
-      await refreshCategories(); event.currentTarget.reset(); resetPreview('newCatImagePreview'); renderAll();
+      await refreshCategories(); event.target.reset(); resetPreview('newCatImagePreview'); renderAll();
     }, 'تمت إضافة القسم ✅'); } catch { /* displayed */ }
   });
   byId('addItemForm')?.addEventListener('submit', async (event) => {
@@ -595,7 +595,7 @@ const bindAddForms = () => {
     try { await saveAction(buttonFor(event, '[type="submit"]'), async () => {
       const category = findCategory(byId('addItemCategory').value); if (!category) throw new Error('اختر القسم أولاً');
       await saveCategoryToFirebase({ ...category, items: [...category.items, { id: createId('item'), name: sanitizeInput(byId('newItemName').value, 150), description: sanitizeInput(byId('newItemDesc').value, 1500), image: await compressedImageFromInput('newItemImage'), status: 'available', order: category.items.length + 1, customFields: [], offers: [] }] });
-      await refreshCategories(); event.currentTarget.reset(); resetPreview('newItemImagePreview'); renderAll();
+      await refreshCategories(); event.target.reset(); resetPreview('newItemImagePreview'); renderAll();
     }, 'تمت إضافة المنتج ✅'); } catch { /* displayed */ }
   });
   byId('addOfferForm')?.addEventListener('submit', async (event) => {
@@ -605,14 +605,14 @@ const bindAddForms = () => {
       const offer = { id: createId('offer'), name: sanitizeInput(byId('newOfferName').value, 150), price: sanitizeNumber(byId('newOfferPrice').value, { min: 0 }), oldPrice: sanitizeNumber(byId('newOfferOldPrice').value, { min: 0 }), description: sanitizeInput(byId('newOfferDesc').value, 1000), currency: byId('newOfferCurrency').value, image: await compressedImageFromInput('newOfferImage'), status: 'available', order: found.item.offers.length + 1, popups: [] };
       const updatedItem = { ...found.item, offers: [...found.item.offers, offer] };
       await saveCategoryToFirebase({ ...found.category, items: found.category.items.map((entry) => entry.id === found.item.id ? updatedItem : entry) });
-      await refreshCategories(); event.currentTarget.reset(); resetPreview('newOfferImagePreview'); renderAll();
+      await refreshCategories(); event.target.reset(); resetPreview('newOfferImagePreview'); renderAll();
     }, 'تمت إضافة العرض ورمزه السري ✅'); } catch { /* displayed */ }
   });
   byId('addWalletForm')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     try { await saveAction(buttonFor(event, '[type="submit"]'), async () => {
       await addWallet({ name: sanitizeInput(byId('newWalletName').value, 100), number: sanitizeInput(byId('newWalletNumber').value, 100), image: await compressedImageFromInput('newWalletImage'), enabled: true, order: wallets.length + 1 });
-      await refreshWallets(); event.currentTarget.reset(); resetPreview('newWalletImagePreview'); renderWallets();
+      await refreshWallets(); event.target.reset(); resetPreview('newWalletImagePreview'); renderWallets();
     }, 'تمت إضافة المحفظة ✅'); } catch { /* displayed */ }
   });
 };
