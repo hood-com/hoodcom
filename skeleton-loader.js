@@ -2,8 +2,8 @@
   'use strict';
   const ID = 'hudSkeletonLoader';
   const startedAt = Date.now();
-  const minimumVisibleMs = 420;
-  const maximumVisibleMs = 15000;
+  const minimumVisibleMs = 180;
+  const maximumVisibleMs = 2200;
   let removed = false;
 
   const markup = `
