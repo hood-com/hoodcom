@@ -205,16 +205,28 @@ export const bindImagePreview = (input, preview, options = {}) => {
   if (!input || !preview) return () => {};
   const handler = async () => {
     const file = input.files?.[0];
-    if (!file) return;
+    if (!file) {
+      input.__compressedImageData = '';
+      input.__imageCompressionPromise = null;
+      return;
+    }
+    // Android content URIs can lose read permission after the picker closes.
+    // Read/compress exactly once and retain the safe data URL for the later save.
+    const compression = compressImageFile(file, options);
+    input.__imageCompressionPromise = compression;
     try {
-      const imageData = await compressImageFile(file, options);
+      const imageData = await compression;
+      input.__compressedImageData = imageData;
       preview.src = imageData;
       preview.dataset.imageValue = imageData;
       preview.style.display = 'block';
       preview.hidden = false;
     } catch (error) {
+      input.__compressedImageData = '';
       if (typeof options.onError === 'function') options.onError(error);
       else console.warn('[dom-utils] image preview failed', error);
+    } finally {
+      if (input.__imageCompressionPromise === compression) input.__imageCompressionPromise = null;
     }
   };
   input.addEventListener('change', handler);

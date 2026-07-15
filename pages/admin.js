@@ -511,11 +511,32 @@ const populateTopupSettings = () => {
   const values = { adminTopupNameInput: topup.accountName, adminTopupPhone1Input: topup.phone1, adminTopupPhone2Input: topup.phone2, adminTopupDepInstInput: topup.depositInstructions, adminTopupWthInstInput: topup.withdrawInstructions };
   Object.entries(values).forEach(([id, value]) => { if (byId(id) && document.activeElement !== byId(id)) byId(id).value = value || ''; });
 };
+const IMAGE_PREVIEWS = Object.freeze({
+  newCatImage: 'newCatImagePreview', newItemImage: 'newItemImagePreview',
+  newOfferImage: 'newOfferImagePreview', newWalletImage: 'newWalletImagePreview',
+  newSvcImageFile: 'newSvcImagePreview'
+});
 const compressedImageFromInput = async (id) => {
-  const file = byId(id)?.files?.[0];
-  return file ? compressImageFile(file) : '';
+  const input = byId(id);
+  if (!input) return '';
+  if (input.__imageCompressionPromise) await input.__imageCompressionPromise;
+  if (input.__compressedImageData) return input.__compressedImageData;
+  const preview = byId(IMAGE_PREVIEWS[id]);
+  if (preview?.dataset.imageValue) return preview.dataset.imageValue;
+  // Fallback only when the change handler did not run (older browsers).
+  const file = input.files?.[0];
+  if (!file) return '';
+  const imageData = await compressImageFile(file);
+  input.__compressedImageData = imageData;
+  return imageData;
 };
-const resetPreview = (id) => { const preview = byId(id); if (preview) { preview.removeAttribute('src'); preview.style.display = 'none'; delete preview.dataset.imageValue; } };
+const resetPreview = (id) => {
+  const preview = byId(id);
+  if (preview) { preview.removeAttribute('src'); preview.style.display = 'none'; delete preview.dataset.imageValue; }
+  const inputId = Object.keys(IMAGE_PREVIEWS).find((key) => IMAGE_PREVIEWS[key] === id);
+  const input = inputId ? byId(inputId) : null;
+  if (input) { input.__compressedImageData = ''; input.__imageCompressionPromise = null; }
+};
 
 const refreshCategories = async () => { categories = await getAllCategories({ refresh: true, includeSecrets: true }); };
 const refreshWallets = async () => { await loadWalletsFromFirebase(); wallets = getAllWallets(); };
@@ -530,7 +551,9 @@ const bindStaticImagePreviews = () => {
     const input = byId(inputId); const preview = byId(previewId);
     if (!input || !preview || input.dataset.previewReady) return;
     input.dataset.previewReady = 'true';
-    bindImagePreview(input, preview);
+    bindImagePreview(input, preview, {
+      onError: (error) => showToast(`تعذر قراءة الصورة: ${sanitizeInput(error?.message || String(error), 240)}`, 'error', { sticky: true })
+    });
   });
 };
 const bindEditModal = () => {
