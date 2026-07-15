@@ -30,7 +30,8 @@ const showFatalError = (error) => {
 };
 
 export const bootstrap = async () => {
-  const page = getCurrentPage();
+  const requestedPage = getCurrentPage();
+  const page = requestedPage.includes('.') ? requestedPage : `${requestedPage}.html`;
   const loader = pageLoaders[page] || pageLoaders['index.html'];
   try {
     const module = await loader();
