@@ -152,11 +152,9 @@ export const bindSupportModalTriggers = () => {
 
 export const renderAdminMenuLink = () => {
   const selectors = [
-    '#menuAdminGateLink',
     'a[href="admin.html"]',
     'a[href="./admin.html"]',
     'a[href="/admin.html"]',
-    '.admin-gate-link',
     '.menu-admin-link'
   ];
   let removed = 0;

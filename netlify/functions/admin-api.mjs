@@ -1,9 +1,10 @@
-import { db, hasSession, json, normalized } from './_admin-core.mjs';
+import { db, json, normalized, verifyAdminJWT } from './_admin-core.mjs';
 
 const allowedOps = new Set(['getDocument', 'getCollection', 'setDocument', 'updateDocument', 'deleteDocument', 'deleteAuthUser']);
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
-  if (!hasSession(event)) return json(401, { error: 'انتهت جلسة الإدارة، سجل الدخول مجددًا' });
+  const admin = await verifyAdminJWT(event);
+  if (!admin) return json(401, { error: 'جلسة المدير غير صالحة أو لا تحمل دور admin' });
   try {
     const body = JSON.parse(event.body || '{}');
     if (!allowedOps.has(body.operation)) return json(400, { error: 'عملية غير مسموحة' });

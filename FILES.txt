@@ -1,6 +1,10 @@
+./CREATE_SUPABASE_ADMIN.sql
 ./FILES.txt
+./NETLIFY_ADMIN_SETUP_AR.md
+./README_DEPLOY_AR.md
+./SUPABASE_RLS_SECURE.sql
+./VERIFICATION_FINAL_AR.md
 ./account.html
-./admin-gate.legacy.js
 ./admin-status.legacy.js
 ./admin.html
 ./app.legacy.js
@@ -17,6 +21,7 @@
 ./config/locations.js
 ./config/settings.js
 ./config/supabase.js
+./content-placeholder.svg
 ./data.legacy.js
 ./debug-test.html
 ./deposit.html
@@ -25,6 +30,9 @@
 ./logo.svg
 ./main.js
 ./netlify.toml
+./netlify/functions/_admin-core.mjs
+./netlify/functions/admin-api.mjs
+./netlify/functions/customer-api.mjs
 ./package.json
 ./pages/account.js
 ./pages/admin.js
@@ -37,6 +45,7 @@
 ./pages/reports.js
 ./reports.html
 ./scripts/admin-panel-regression.mjs
+./scripts/build-site.mjs
 ./scripts/check-modules.mjs
 ./services/auth-service.js
 ./services/balance-service.js

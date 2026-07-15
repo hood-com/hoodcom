@@ -2,9 +2,9 @@ import { initCommonPage } from './common.js';
 import authStore from '../stores/auth-store.js';
 import { loadCategories, setCurrentCategory, setCurrentItem } from '../stores/category-store.js';
 import { subscribeCategories } from '../services/category-service.js';
-import { createOrder } from '../stores/order-store.js';
+import { securePurchase } from '../services/order-service.js';
 import { loadSiteSettingsFromFirebase, getProductFields, getSiteSettings } from '../services/settings-service.js';
-import { getUserBalance, debitUserBalance, creditUserBalance } from '../services/balance-service.js';
+import { getUserBalance, refreshBalance } from '../services/balance-service.js';
 import CategoryCard from '../components/CategoryCard.js';
 import ProductCard from '../components/ProductCard.js';
 import { escapeHTML, safeURL } from '../utils/sanitizers.js';
@@ -75,17 +75,15 @@ const submitPurchase = async (event) => {
   const fields = Object.fromEntries([...form.querySelectorAll('[data-order-field]')].map((input) => [input.dataset.orderField, input.value.trim()]));
   const button = form.querySelector('[type="submit"]'); if (button) button.disabled = true;
   try {
-    await debitUserBalance(user.uid, price);
-    const order = await createOrder({
-      userId: user.uid, categoryId: currentPurchase.category.id, categoryName: currentPurchase.category.name,
-      itemId: currentPurchase.item.id, itemName: currentPurchase.item.name, offerId: currentPurchase.offer.id,
-      offerName: currentPurchase.offer.name, price, total: price, currency: currentPurchase.offer.currency || 'YER',
-      customerFields: fields, paymentMethod: 'account_balance'
+    const order = await securePurchase({
+      categoryId: currentPurchase.category.id, itemId: currentPurchase.item.id,
+      offerId: currentPurchase.offer.id, customerFields: fields
     });
+    await refreshBalance(user.uid).catch(() => {});
     closeCustomerModal(); form.reset(); currentPurchase = null; showToast('toast_order_saved_with_id', 'success', { replacements: { id: order.id } });
   } catch (error) {
-    if (getUserBalance(user.uid) < balance) await creditUserBalance(user.uid, price).catch(() => {});
-    showToast('toast_order_save_failed', 'error');
+    console.error('[category] secure purchase failed', error);
+    showToast(error.message || 'toast_order_save_failed', 'error');
   } finally { if (button) button.disabled = false; }
 };
 

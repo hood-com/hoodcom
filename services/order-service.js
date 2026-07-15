@@ -1,4 +1,4 @@
-import { getDB } from './supabase-client.js';
+import { getClient, getDB } from './supabase-client.js';
 import { getCurrentUser } from './auth-service.js';
 import { sanitizeInput, sanitizeValue } from '../utils/sanitizers.js';
 import { generateSecretToken } from '../utils/security.js';
@@ -63,6 +63,19 @@ export const createOrder = async (orderData) => {
     console.error('[order-service] create failed', error);
     throw error;
   }
+};
+export const securePurchase = async ({ categoryId, itemId, offerId, customerFields = {} } = {}) => {
+  const client = await getClient();
+  const { data } = await client.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('يجب تسجيل الدخول لإتمام الشراء');
+  const response = await fetch('/.netlify/functions/customer-api', {
+    method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ operation: 'purchase', categoryId, itemId, offerId, customerFields })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok) throw new Error(payload.error || 'تعذر إتمام الطلب');
+  return payload.result;
 };
 export const saveOrderToFirestore = createOrder;
 export const submitOrderOnSite = createOrder;

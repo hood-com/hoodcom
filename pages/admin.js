@@ -1,6 +1,6 @@
 import { initCommonPage } from './common.js';
 import {
-  hasAdminSession, checkAdminSession, clearAdminSession, deleteUserAccount, setAdminGateCredentials,
+  hasAdminSession, checkAdminSession, clearAdminSession, deleteUserAccount,
   setUserVerificationStatus, subscribeUsersForAdmin, updateUserAccountStatus
 } from '../services/auth-service.js';
 import {
@@ -619,7 +619,6 @@ const bindSettingsForms = () => {
   }), 'تم حفظ إعدادات أحجام الصور وتطبيقها فوراً ✅');
   bindFormSave('contactNumbersForm', () => saveSiteSettings({ whatsappNumber: sanitizeInput(byId('settingsWhatsapp').value, 30), supportNumber: sanitizeInput(byId('settingsSupport').value, 30), adminPhone: sanitizeInput(byId('settingsAdmin').value, 30), whatsappChannel: sanitizeInput(byId('settingsChannel').value, 500) }), 'تم حفظ أرقام التواصل ✅');
   byId('settingsWatermarkOpacity')?.addEventListener('input', (event) => setText('watermarkOpacityValue', event.target.value));
-  byId('adminGateForm')?.addEventListener('submit', async (event) => { event.preventDefault(); try { await saveAction(buttonFor(event, '[type="submit"]'), async () => { await setAdminGateCredentials(byId('gateNewUsername').value, byId('gateNewPassword').value); event.currentTarget.reset(); }, 'تم تحديث بيانات دخول المدير ✅'); } catch { /* displayed */ } });
   byId('settingsAdminAvailability')?.addEventListener('change', syncAdminAvailabilityPreview);
   byId('saveAdminAvailabilityBtn')?.addEventListener('click', async (event) => { try { settings = await saveAction(event.currentTarget, () => saveSiteSettings({ adminAvailability: byId('settingsAdminAvailability').checked }), byId('settingsAdminAvailability').checked ? 'تم إعلان الإدارة متاحة ✅' : 'تم إعلان الإدارة غير متاحة ✅'); syncAdminAvailabilityPreview(); } catch { /* displayed */ } });
   byId('savePlatformsBtn')?.addEventListener('click', async (event) => { try { settings = await saveAction(event.currentTarget, () => saveSiteSettings({ contactPlatformsEnabled: byId('settingsContactPlatformsEnabled').checked, contactPlatformsTitle: sanitizeInput(byId('settingsContactPlatformsTitle').value, 60), contactPlatforms: getContacts('contactPlatforms') })); } catch { /* displayed */ } });

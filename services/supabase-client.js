@@ -151,8 +151,12 @@ const createDatabaseApi = (client) => ({
 });
 let adminDatabaseApi = null;
 const adminCall = async (operation, payload = {}) => {
+  const client = await getClient();
+  const { data: sessionData } = await client.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('انتهت جلسة المدير، سجل الدخول مجددًا');
   const response = await fetch('/.netlify/functions/admin-api', {
-    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ operation, ...payload })
   });
   const data = await response.json().catch(() => ({}));

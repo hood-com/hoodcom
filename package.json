@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8080",
-    "check": "node scripts/check-modules.mjs"
+    "check": "node scripts/check-modules.mjs",
+    "build": "node scripts/build-site.mjs"
   }
 }

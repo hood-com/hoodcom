@@ -1,6 +1,6 @@
 import { initCommonPage } from './common.js';
 import authStore, { login as loginAction } from '../stores/auth-store.js';
-import { register, resolveLoginEmail, sendPasswordResetEmail, sendEmailVerificationCode, verifyEmailCode, loginWithGoogle, verifyAdminGate, createAdminSession, hasAdminSession, getCurrentUser } from '../services/auth-service.js';
+import { register, resolveLoginEmail, sendPasswordResetEmail, sendEmailVerificationCode, verifyEmailCode, loginWithGoogle, loginAdmin, getCurrentUser } from '../services/auth-service.js';
 import { LOCATION_DATA, COUNTRY_DIAL_CODES } from '../config/locations.js';
 import { isValidEmailAddress, isValidName, isValidPassword, isValidPhone, validateRequired } from '../utils/validators.js';
 import { escapeHTML } from '../utils/sanitizers.js';
@@ -97,12 +97,10 @@ const bindLogin = () => {
 
     setButtonLoading(button, true);
     try {
-      const isAdminGateMatch = await verifyAdminGate(username, password);
-      if (isAdminGateMatch) {
-        const token = createAdminSession();
-        if (!token || !hasAdminSession()) throw new Error('تعذر إنشاء جلسة الإدارة في هذا المتصفح');
-        showToast('toast_admin_gate_success');
-        globalThis.setTimeout(() => { globalThis.location.assign('admin.html'); }, 350);
+      if (username.includes('@')) {
+        await loginAdmin(username, password);
+        showToast('تم تسجيل دخول المدير بنجاح', 'success');
+        globalThis.setTimeout(() => { globalThis.location.assign('admin.html'); }, 250);
         return;
       }
 
@@ -179,11 +177,38 @@ const finishGoogleRegistration = async () => {
 };
 
 export const initLoginPage = async () => {
-  await initCommonPage(); populateCountries(); bindLogin(); bindRegistration(); bindGoogle();
-  element('regCountry')?.addEventListener('change', (event) => { populateCities(event.target.value); const phone = element('regPhone'); if (phone) phone.value = `+${selectedDialCode()}${localPhone(phone.value)}`; });
-  element('regCity')?.addEventListener('change', (event) => populateDistricts(value('regCountry'), event.target.value));
-  for (const [buttonId, inputId] of [['toggleLoginPass', 'loginPassword'], ['toggleRegPass', 'regPassword']]) element(buttonId)?.addEventListener('click', () => { const input = element(inputId); if (input) input.type = input.type === 'password' ? 'text' : 'password'; });
-  await finishGoogleRegistration();
+  // Bind all controls immediately so slow network/Supabase startup never freezes the page.
+  populateCountries();
+  bindLogin();
+  bindRegistration();
+  bindGoogle();
+
+  element('regCountry')?.addEventListener('change', (event) => {
+    populateCities(event.target.value);
+    const phone = element('regPhone');
+    if (phone) phone.value = `+${selectedDialCode()}${localPhone(phone.value)}`;
+  });
+
+  element('regCity')?.addEventListener('change', (event) =>
+    populateDistricts(value('regCountry'), event.target.value)
+  );
+
+  for (const [buttonId, inputId] of [
+    ['toggleLoginPass', 'loginPassword'],
+    ['toggleRegPass', 'regPassword']
+  ]) {
+    element(buttonId)?.addEventListener('click', () => {
+      const input = element(inputId);
+      if (input) input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  }
+
+  // Network-dependent initialization runs in the background without blocking controls.
+  void initCommonPage().catch((error) =>
+    console.warn('[login-page] common initialization delayed', error)
+  );
+
+  void finishGoogleRegistration();
 };
 
 export default initLoginPage;

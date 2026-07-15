@@ -4,13 +4,6 @@ import { generateAccountSecret, generateDeviceId, generateUniqueSecretToken, gen
 import { isValidEmailAddress, isValidPassword, isValidPhone } from '../utils/validators.js';
 import { sanitizeInput } from '../utils/sanitizers.js';
 
-const ADMIN_TOKEN_KEY = 'hud_admin_gate_token';
-const ADMIN_GATE_COLLECTION = 'settings';
-const ADMIN_GATE_DOCUMENT = 'admin_gate';
-const ADMIN_GATE_ITERATIONS = 150000;
-// Must stay identical to admin-gate.legacy.js. It uses the U+0001 control
-// character as the separator for already-persisted hashes.
-const ADMIN_GATE_SEPARATOR = '\u0001';
 const COUNTRY_CODES = ['967', '966', '971', '965', '974', '973', '968', '20', '962', '964', '961', '963', '970', '212', '216', '213', '249', '252', '222', '253', '269'];
 
 const normalizeAuthUser = (user) => user ? ({
@@ -18,7 +11,9 @@ const normalizeAuthUser = (user) => user ? ({
   id: user.id || user.uid,
   email: user.email || '',
   displayName: user.user_metadata?.displayName || user.user_metadata?.name || user.displayName || '',
-  emailVerified: Boolean(user.email_confirmed_at || user.emailVerified)
+  emailVerified: Boolean(user.email_confirmed_at || user.emailVerified),
+  role: user.app_metadata?.role || user.role || 'customer',
+  appMetadata: { ...(user.app_metadata || {}) }
 }) : null;
 
 // Never put manager-only references or verification codes into a normal user
@@ -182,7 +177,6 @@ export const login = async (username, password) => {
     const credential = await signInWithEmailAndPassword(email, password);
     const db = await getDB();
     const profile = credential.user?.uid ? await db.getDocument('users', credential.user.uid) : null;
-    if (profile) await ensureUserSecret(credential.user.uid, profile);
     const user = stripManagerOnlyFields({
       ...credential.user,
       ...profile,
@@ -378,8 +372,12 @@ export const subscribeUsersForAdmin = async (listener, onError) => (await getDB(
  * the profile document, because that leaves a login-capable orphan account.
  */
 export const deleteUserAccount = async (userId) => {
+  const client = await getClient();
+  const { data: sessionData } = await client.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('انتهت جلسة المدير');
   const response = await fetch('/.netlify/functions/admin-api', {
-    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ operation: 'deleteAuthUser', id: String(userId) })
   });
   const data = await response.json().catch(() => ({}));
@@ -387,103 +385,31 @@ export const deleteUserAccount = async (userId) => {
   return true;
 };
 
-const bytesToHex = (bytes) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-const hexToBytes = (hex) => {
-  const normalized = String(hex || '').trim();
-  if (!normalized || normalized.length % 2 !== 0 || !/^[a-f\d]+$/iu.test(normalized)) throw new Error('Invalid admin-gate salt');
-  return Uint8Array.from(normalized.match(/.{2}/gu), (value) => Number.parseInt(value, 16));
-};
-
-export const hashAdminGateCredentials = async (username, password, saltHex, iterations = ADMIN_GATE_ITERATIONS) => {
-  const cryptoApi = globalThis.crypto;
-  if (!cryptoApi?.subtle) throw new Error('Web Crypto API is unavailable');
-  const combined = `${String(username ?? '')}${ADMIN_GATE_SEPARATOR}${String(password ?? '')}`;
-  const key = await cryptoApi.subtle.importKey(
-    'raw', new TextEncoder().encode(combined), { name: 'PBKDF2' }, false, ['deriveBits']
-  );
-  const bits = await cryptoApi.subtle.deriveBits(
-    { name: 'PBKDF2', salt: hexToBytes(saltHex), iterations: Number(iterations) || ADMIN_GATE_ITERATIONS, hash: 'SHA-256' },
-    key,
-    256
-  );
-  return bytesToHex(new Uint8Array(bits));
-};
-
-const constantTimeEqual = (left, right) => {
-  const first = String(left || '');
-  const second = String(right || '');
-  let difference = first.length ^ second.length;
-  const length = Math.max(first.length, second.length);
-  for (let index = 0; index < length; index += 1) {
-    difference |= (first.charCodeAt(index) || 0) ^ (second.charCodeAt(index) || 0);
+export const loginAdmin = async (email, password) => {
+  const credential = await signInWithEmailAndPassword(String(email || '').trim().toLowerCase(), String(password || ''));
+  const rawRole = credential.rawUser?.app_metadata?.role;
+  if (rawRole !== 'admin') {
+    await (await getAuth()).signOut().catch(() => {});
+    throw new Error('هذا الحساب لا يملك صلاحية الإدارة');
   }
-  return difference === 0;
-};
-
-const createDefaultAdminGate = async (db) => {
-  const salt = new Uint8Array(16);
-  globalThis.crypto.getRandomValues(salt);
-  const config = {
-    saltHex: bytesToHex(salt),
-    iterations: ADMIN_GATE_ITERATIONS,
-    updatedAt: new Date().toISOString()
-  };
-  config.hashHex = await hashAdminGateCredentials('hood', 'hood', config.saltHex, config.iterations);
-  await db.setDocument(ADMIN_GATE_COLLECTION, ADMIN_GATE_DOCUMENT, config);
-  return config;
-};
-
-const adminAuthRequest = async (method = 'GET', body) => {
-  const response = await fetch('/.netlify/functions/admin-auth', {
-    method, credentials: 'same-origin', headers: { 'content-type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body)
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok && response.status !== 401) throw new Error(data.error || 'تعذر الاتصال بخدمة الإدارة');
-  return { response, data };
-};
-
-export const verifyAdminGate = async (username, password) => {
-  try {
-    const { response, data } = await adminAuthRequest('POST', { username: String(username || '').trim(), password: String(password || '') });
-    globalThis.__HUD_ADMIN_AUTHENTICATED__ = response.ok && data.authenticated === true;
-    return globalThis.__HUD_ADMIN_AUTHENTICATED__;
-  } catch (error) { console.error('[auth-service] secure admin login failed', error); return false; }
-};
-
-export const setAdminGateCredentials = async (username, password) => {
-  const { response, data } = await adminAuthRequest('POST', { action: 'change-credentials', username: String(username || '').trim(), password: String(password || '') });
-  if (!response.ok) throw new Error(data.error || 'تعذر تغيير بيانات الإدارة');
-  return true;
+  globalThis.__HUD_ADMIN_AUTHENTICATED__ = true;
+  return { ...credential.user, role: 'admin', appMetadata: { ...(credential.rawUser.app_metadata || {}) } };
 };
 
 export const checkAdminSession = async () => {
   try {
-    const { response, data } = await adminAuthRequest('GET');
-    globalThis.__HUD_ADMIN_AUTHENTICATED__ = response.ok && data.authenticated === true;
-    return globalThis.__HUD_ADMIN_AUTHENTICATED__;
+    const auth = await getAuth();
+    const { data, error } = await auth.getUser();
+    const valid = !error && data.user?.app_metadata?.role === 'admin';
+    globalThis.__HUD_ADMIN_AUTHENTICATED__ = valid;
+    return valid;
   } catch { globalThis.__HUD_ADMIN_AUTHENTICATED__ = false; return false; }
 };
-export const createAdminSession = () => globalThis.__HUD_ADMIN_AUTHENTICATED__ ? 'secure-http-only-session' : '';
 export const hasAdminSession = () => globalThis.__HUD_ADMIN_AUTHENTICATED__ === true;
 export const clearAdminSession = async () => {
   globalThis.__HUD_ADMIN_AUTHENTICATED__ = false;
-  try { await adminAuthRequest('DELETE'); } catch (error) { console.warn('[auth-service] admin logout failed', error); }
+  try { await (await getAuth()).signOut(); } catch (error) { console.warn('[auth-service] admin logout failed', error); }
 };
-
-// admin-gate.legacy.js is loaded before main.js on login.html for backward
-// compatibility. Replace its implementation with this canonical module API so
-// both entry points use one PBKDF2 implementation and one session key.
-const legacyAdminGate = globalThis.HUD_ADMIN_GATE;
-if (legacyAdminGate && typeof legacyAdminGate === 'object') {
-  Object.assign(legacyAdminGate, {
-    verifyAdminGate,
-    setAdminGateCredentials,
-    createSession: createAdminSession,
-    hasValidSession: hasAdminSession,
-    clearSession: clearAdminSession
-  });
-}
 
 export { generateUniqueSecretToken };
 
@@ -493,6 +419,5 @@ export default Object.freeze({
   createUserWithSecret, ensureUserSecret, getUserSecret, listUsersForAdmin, searchUsersForAdmin,
   updateUserAccountStatus, setUserVerificationStatus, subscribeUsersForAdmin, deleteUserAccount,
   sendEmailVerificationCode, verifyEmailCode, loginWithGoogle, generateUniqueSecretToken,
-  hashAdminGateCredentials, verifyAdminGate, setAdminGateCredentials,
-  createAdminSession, hasAdminSession, checkAdminSession, clearAdminSession
+  loginAdmin, hasAdminSession, checkAdminSession, clearAdminSession
 });

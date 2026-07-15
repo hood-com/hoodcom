@@ -1,31 +1,34 @@
-# إعداد بوابة الإدارة الآمنة في Netlify
+# إعداد مدير Supabase الآمن
 
-## مهم
-بيانات دخول الإدارة لا توجد داخل الملفات. يجب إضافتها كمتغيرات سرية من:
-`Netlify → Site configuration → Environment variables`.
+## متغيرات Netlify المطلوبة فقط
+أضف في Netlify → Project configuration → Environment variables:
 
-أضف المتغيرات التالية:
+- `SUPABASE_URL`: رابط مشروع Supabase (ليس سرًا).
+- `SUPABASE_SERVICE_ROLE_KEY`: مفتاح service_role/Secret الخادمي، واجعله Secret وProduction.
 
-- `ADMIN_USERNAME`: اسم مستخدم الباب الخلفي الحالي.
-- `ADMIN_PASSWORD`: كلمة مرور الباب الخلفي الحالية.
-- `ADMIN_SESSION_SECRET`: قيمة عشوائية طويلة جدًا (64 خانة أو أكثر).
-- `SUPABASE_URL`: رابط مشروع Supabase، مثل `https://PROJECT.supabase.co`.
-- `SUPABASE_SERVICE_ROLE_KEY`: مفتاح service_role من Supabase.
+احذف نهائيًا إن كانت موجودة:
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
 
-يمكن إيجاد المفتاح من Supabase في:
-`Project Settings → API Keys` ثم مفتاح `service_role` أو Secret key الخادمي.
+## إنشاء المدير
+1. Supabase → Authentication → Users → Add user.
+2. أدخل بريد المدير وكلمة مرور قوية، وفعّل Auto Confirm للمدير.
+3. افتح `CREATE_SUPABASE_ADMIN.sql` واستبدل البريد التجريبي ببريد المدير في الموضعين.
+4. شغّل SQL وتأكد أن النتيجة `role = admin`.
+5. سجّل الدخول من `login.html` باستخدام بريد المدير وكلمة مروره؛ العملاء يستمرون بالدخول برقم الهاتف.
 
-تحذير: لا تضع `SUPABASE_SERVICE_ROLE_KEY` في `config/supabase.js`، ولا ترسله لأي شخص، ولا تستخدمه كـ anon key.
-
-بعد إضافة المتغيرات اختر Redeploy للموقع. اختبر الدخول إلى الإدارة، ثم غيّر بيانات الباب الخلفي من لوحة الإدارة إذا رغبت. عند تغييرها تحفظ الخوادم تجزئة PBKDF2 فقط في قاعدة البيانات، ولا تحفظ كلمة المرور نفسها.
+## الحماية
+- دور المدير موجود في `app_metadata` التي لا يستطيع العميل تعديلها.
+- `admin-api` تتحقق من JWT مع Supabase في كل عملية.
+- مفتاح service_role لا يصل إلى المتصفح.
+- الشراء يمر عبر `customer-api` التي تتحقق من المستخدم والسعر والرصيد خادميًا.
 
 ## ترتيب النشر
-1. ارفع الحزمة الجديدة بدل الملفات الحالية.
-2. أضف متغيرات البيئة الخمسة.
-3. أعد النشر.
-4. اختبر تسجيل دخول الإدارة.
-5. اختبر قراءة الأقسام وإضافة قسم تجريبي ثم حذفه.
-6. لا تشغّل `SUPABASE_RLS_SECURE.sql` قبل نجاح الاختبارات السابقة.
-
-## ملاحظة RLS
-ملف SQL المرفق يغلق الوصول العام الخطر. لكن نظام الرصيد والشراء يحتاج لاحقًا دالة خادمية ذرية قبل الاعتماد المالي الحقيقي؛ لا تسمح للمستخدم بتحديث رصيده مباشرة عبر RLS. لذلك سنشغّل SQL بعد فحص مسارات الحسابات والطلبات في النسخة المنشورة.
+1. ارفع هذه الحزمة إلى GitHub.
+2. تأكد من نشر Netlify Functions: `admin-api` و`customer-api`.
+3. احتفظ بمتغيري Netlify المطلوبين فقط.
+4. أنشئ المدير وشغّل `CREATE_SUPABASE_ADMIN.sql`.
+5. اختبر دخول المدير.
+6. شغّل `SUPABASE_RLS_SECURE.sql`.
+7. اختبر الزائر والعميل والمدير.
