@@ -1,12 +1,12 @@
 const pageLoaders = Object.freeze({
-  'index.html': () => import('./pages/index.js?v=20260715-4'),
-  'login.html': () => import('./pages/login.js?v=20260715-4'),
-  'admin.html': () => import('./pages/admin.js?v=20260715-4'),
-  'deposit.html': () => import('./pages/deposit.js?v=20260715-4'),
-  'account.html': () => import('./pages/account.js?v=20260715-4'),
-  'category.html': () => import('./pages/category.js?v=20260715-4'),
-  'reports.html': () => import('./pages/reports.js?v=20260715-4'),
-  'debug-test.html': () => import('./pages/debug.js?v=20260715-4')
+  'index.html': () => import('./pages/index.js?v=20260715-5'),
+  'login.html': () => import('./pages/login.js?v=20260715-5'),
+  'admin.html': () => import('./pages/admin.js?v=20260715-5'),
+  'deposit.html': () => import('./pages/deposit.js?v=20260715-5'),
+  'account.html': () => import('./pages/account.js?v=20260715-5'),
+  'category.html': () => import('./pages/category.js?v=20260715-5'),
+  'reports.html': () => import('./pages/reports.js?v=20260715-5'),
+  'debug-test.html': () => import('./pages/debug.js?v=20260715-5')
 });
 
 export const getCurrentPage = (pathname = globalThis.location?.pathname || '') =>

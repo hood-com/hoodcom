@@ -1,7 +1,7 @@
 import { initCommonPage } from './common.js';
 import authStore from '../stores/auth-store.js';
 import { loadCategories } from '../stores/category-store.js';
-import { getSiteSettings, renderFeaturedOffers, renderDynamicContacts, renderHoodAbout, renderContactPlatforms } from '../services/settings-service.js';
+import { getSiteSettings, getFeaturedOffers, renderFeaturedOffers, renderDynamicContacts, renderHoodAbout, renderContactPlatforms } from '../services/settings-service.js';
 import { initReviews, submitReview } from '../services/review-service.js';
 import CategoryCard from '../components/CategoryCard.js';
 import ProductCard from '../components/ProductCard.js';
@@ -88,19 +88,68 @@ const bindSearch = () => {
   });
 };
 
+const runWhenIdle = (callback, timeout = 1800) => {
+  if ('requestIdleCallback' in globalThis) return globalThis.requestIdleCallback(callback, { timeout });
+  return globalThis.setTimeout(callback, Math.min(timeout, 900));
+};
+const runWhenVisible = (target, callback, rootMargin = '500px') => {
+  if (!target || !('IntersectionObserver' in globalThis)) { void callback(); return () => {}; }
+  let called = false;
+  const observer = new IntersectionObserver((entries) => {
+    if (called || !entries.some((entry) => entry.isIntersecting)) return;
+    called = true; observer.disconnect(); void callback();
+  }, { rootMargin });
+  observer.observe(target);
+  return () => observer.disconnect();
+};
+const loadCategorySummaries = async () => {
+  const response = await fetch('/.netlify/functions/catalog-api', { headers: { accept: 'application/json' } });
+  if (!response.ok) throw new Error('تعذر تحميل فهرس الأقسام');
+  const payload = await response.json();
+  return Array.isArray(payload.categories) ? payload.categories : [];
+};
+
 export const initHomePage = async () => {
-  await initCommonPage();
-  renderReviewGate(); // rendered immediately after session resolution; guests never receive an editable form
-  authStore.subscribe(() => renderReviewGate());
+  // Critical UI starts immediately. Network/session work must never block first paint.
+  const commonReady = initCommonPage().catch((error) => console.warn('[home] common initialization delayed', error));
   const year = byId('footerYear'); if (year) year.textContent = String(new Date().getFullYear());
-  try { categories = await loadCategories(); renderCategories(); renderFeatured(); }
-  catch (error) { renderCategories([]); console.error('[home] categories failed', error); }
-  renderContacts(); bindSearch();
-  try { const initial = await initReviews(renderReviews); renderReviews(initial); } catch { renderReviews([]); }
-  globalThis.addEventListener('hud:categories-updated', (event) => { categories = event.detail?.categories || categories; renderCategories(); renderFeatured(); });
+  bindSearch(); renderContacts(); injectIcons();
+
+  // Home receives lightweight category summaries; nested products/offers load only when needed.
+  void loadCategorySummaries().then((summaries) => {
+    categories = summaries; renderCategories();
+  }).catch(async (error) => {
+    console.warn('[home] summary endpoint fallback', error);
+    try { categories = await loadCategories(); renderCategories(); }
+    catch (fallbackError) { console.error('[home] categories failed', fallbackError); renderCategories([]); }
+  });
+
+  // Auth chrome and the review gate update when session resolution completes.
+  void commonReady.then(() => renderReviewGate());
+  authStore.subscribe(() => renderReviewGate());
+
+  // Reviews are below the fold: do not request them until the user approaches the section.
+  const stopReviewObserver = runWhenVisible(byId('reviewsSection'), async () => {
+    try { const initial = await initReviews(renderReviews); renderReviews(initial); }
+    catch { renderReviews([]); }
+  }, '420px');
+
+  // Full nested catalog is only needed on home when featured entries are configured.
+  if (getFeaturedOffers().length) {
+    runWhenIdle(async () => {
+      try { categories = await loadCategories(); renderCategories(); renderFeatured(); }
+      catch (error) { console.warn('[home] featured catalog deferred', error); }
+    }, 2200);
+  } else {
+    const section = byId('featuredSection'); if (section) section.style.display = 'none';
+  }
+
+  globalThis.addEventListener('hud:site-settings-updated', () => { renderContacts(); });
+  globalThis.addEventListener('hud:categories-updated', (event) => {
+    categories = event.detail?.categories || categories; renderCategories(); renderFeatured();
+  });
   globalThis.addEventListener('hud:review-submitted', () => void initReviews(renderReviews));
-  injectIcons();
-  return () => reviewUnsubscribe?.();
+  return () => { stopReviewObserver?.(); reviewUnsubscribe?.(); };
 };
 
 export default initHomePage;
