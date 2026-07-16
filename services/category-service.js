@@ -2,6 +2,7 @@ import { getDB } from './supabase-client.js';
 import { STORAGE_KEYS } from '../config/settings.js';
 import { sanitizeBoolean, sanitizeInput, sanitizeNumber } from '../utils/sanitizers.js';
 import { generateOfferSecret } from '../utils/security.js';
+import { FULL_CATALOG_KEY, getSnapshot, markFullCatalogReady, setSnapshot } from './catalog-cache.js';
 
 let categoryCache = [];
 
@@ -127,6 +128,8 @@ export const loadCategoriesFromFirebase = async () => {
     const legacyIds = remote.filter(hasMissingOfferSecret).map((category) => String(category.id));
     categoryCache = remote.map(normalizeCategory).sort((a, b) => a.order - b.order);
     persistCache();
+    await setSnapshot(FULL_CATALOG_KEY, { categories: withoutOfferSecrets(categoryCache), cachedAt: Date.now() }).catch(() => {});
+    markFullCatalogReady();
 
     // Backfill legacy offers exactly once. We await this migration so a page
     // refresh cannot replace a newly generated token with an older document.
@@ -178,8 +181,22 @@ export const deleteCategoryFromFirebase = async (id) => {
   }
 };
 
+export const getCachedCategories = async () => {
+  if (categoryCache.length) return viewCategories();
+  const snapshot = await getSnapshot(FULL_CATALOG_KEY);
+  if (Array.isArray(snapshot?.categories)) {
+    categoryCache = snapshot.categories.map(normalizeCategory).sort((a, b) => a.order - b.order);
+    return viewCategories();
+  }
+  categoryCache = readCache();
+  return viewCategories();
+};
 export const getAllCategories = async (options = {}) => {
-  if (!categoryCache.length || options.refresh) await loadCategoriesFromFirebase();
+  if (options.refresh) await loadCategoriesFromFirebase();
+  else if (!categoryCache.length) {
+    await getCachedCategories();
+    if (!categoryCache.length) await loadCategoriesFromFirebase();
+  }
   return viewCategories(options.includeSecrets === true);
 };
 // Performance: check cache first to avoid full collection scan when possible
@@ -308,7 +325,7 @@ if (typeof globalThis.window !== 'undefined') {
 }
 
 export default Object.freeze({
-  loadCategoriesFromFirebase, saveCategoryToFirebase, updateCategory, deleteCategoryFromFirebase,
+  loadCategoriesFromFirebase, getCachedCategories, saveCategoryToFirebase, updateCategory, deleteCategoryFromFirebase,
   getCategory, getAllCategories, getCategoryById, getItemsByCategory, getItemById, updateItem,
   deleteItem, getOffersByItem, getAllOffers, getOfferSecret, updateOffer, deleteOffer,
   renderHomeCategories, renderCategoryPage, subscribeCategories,

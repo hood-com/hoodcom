@@ -1,9 +1,8 @@
 import { initCommonPage } from './common.js';
 import authStore from '../stores/auth-store.js';
 import { loadCategories, setCurrentCategory, setCurrentItem } from '../stores/category-store.js';
-import { subscribeCategories } from '../services/category-service.js';
 import { securePurchase } from '../services/order-service.js';
-import { loadSiteSettingsFromFirebase, getProductFields, getSiteSettings } from '../services/settings-service.js';
+import { getProductFields, getSiteSettings } from '../services/settings-service.js';
 import { getUserBalance, refreshBalance } from '../services/balance-service.js';
 import CategoryCard from '../components/CategoryCard.js';
 import ProductCard from '../components/ProductCard.js';
@@ -44,7 +43,10 @@ const openProduct = (productId) => {
   const descriptionTarget = document.getElementById('modalDesc'); if (descriptionTarget) descriptionTarget.textContent = item.description || item.desc || '';
   const offersTarget = document.getElementById('modalOffers');
   const offers = (item.offers || []).filter((offer) => offer.status !== 'unavailable');
-  if (offersTarget) offersTarget.innerHTML = offers.length ? offers.map((offer) => `<article class="offer-card"><div><strong>${escapeHTML(offer.name || item.name)}</strong><p>${escapeHTML(offer.description || offer.desc || '')}</p></div><span>${formatPrice(Number(offer.price || 0), offer.currency || 'YER')}</span><button class="btn btn-gold" type="button" data-action="buy-offer" data-product-id="${escapeHTML(item.id)}" data-offer-id="${escapeHTML(offer.id || '')}">شراء</button></article>`).join('') : '<div class="empty-state">لا توجد عروض متاحة</div>';
+  if (offersTarget) offersTarget.innerHTML = offers.length ? offers.map((offer) => {
+    const image = safeURL(offer.image || item.image, 'content-placeholder.svg');
+    return `<article class="offer-card catalog-choice-card" role="button" tabindex="0" data-action="buy-offer" data-product-id="${escapeHTML(item.id)}" data-offer-id="${escapeHTML(offer.id || '')}"><div class="offer-image-wrap"><img src="${escapeHTML(image)}" alt="${escapeHTML(offer.name || item.name)}" loading="lazy" decoding="async" width="420" height="300"></div><div class="offer-info"><strong>${escapeHTML(offer.name || item.name)}</strong><p>${escapeHTML(offer.description || offer.desc || '')}</p></div></article>`;
+  }).join('') : '<div class="empty-state">لا توجد عروض متاحة</div>';
   openLayer('itemModal', 'itemModalOverlay'); injectIcons();
 };
 
@@ -105,6 +107,11 @@ const bindEvents = () => {
     const productButton = event.target.closest('[data-action="select-product"]'); if (productButton) openProduct(productButton.dataset.productId);
     const offerButton = event.target.closest('[data-action="buy-offer"]'); if (offerButton) startPurchase(offerButton.dataset.productId, offerButton.dataset.offerId);
   });
+  document.addEventListener('keydown', (event) => {
+    if (!['Enter', ' '].includes(event.key)) return;
+    const choice = event.target.closest('.catalog-choice-card[data-action]');
+    if (choice) { event.preventDefault(); choice.click(); }
+  });
   document.getElementById('closeItemModalBtn')?.addEventListener('click', closeItemModal);
   document.getElementById('itemModalOverlay')?.addEventListener('click', closeItemModal);
   document.getElementById('customerOverlay')?.addEventListener('click', closeCustomerModal);
@@ -112,18 +119,17 @@ const bindEvents = () => {
 };
 
 export const initCategoryPage = async () => {
-  await initCommonPage(); await loadSiteSettingsFromFirebase(); categories = await loadCategories(true);
-  const params = new URLSearchParams(globalThis.location.search); const categoryId = params.get('id'); renderPage(categoryId); bindEvents();
+  await initCommonPage();
+  categories = await loadCategories(false);
+  const params = new URLSearchParams(globalThis.location.search);
+  const categoryId = params.get('id');
+  renderPage(categoryId); bindEvents();
   if (params.get('item')) openProduct(params.get('item'));
-  const settings = getSiteSettings(); void settings;
-  let receivedInitialRealtimeSnapshot = false;
-  const unsubscribe = await subscribeCategories((rows) => {
-    categories = rows;
-    renderPage(categoryId);
-    if (receivedInitialRealtimeSnapshot) showToast('تم تحديث المنتجات والعروض تلقائياً ✅', 'info');
-    receivedInitialRealtimeSnapshot = true;
-  }, (error) => console.warn('[category] realtime failed', error));
-  globalThis.addEventListener('pagehide', () => unsubscribe?.(), { once: true });
+  // Customer catalog is snapshot-based. New admin changes appear only after the fixed refresh button.
+  globalThis.addEventListener('hud:categories-updated', async (event) => {
+    if (!event.detail?.categories) return;
+    categories = event.detail.categories; renderPage(categoryId);
+  });
 };
 
 export default initCategoryPage;

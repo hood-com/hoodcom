@@ -202,25 +202,7 @@ export const initAdminAvailabilityIndicator = () => {
   const cachedSettings = getSiteSettings();
   applyImageSizeSettings(cachedSettings);
   createAdminStatusIndicator(cachedSettings.adminAvailability === true);
-
-  if (!adminAvailabilityInitialization) {
-    adminAvailabilityInitialization = (async () => {
-      try {
-        const remoteSettings = await loadSiteSettingsFromFirebase();
-        createAdminStatusIndicator(remoteSettings.adminAvailability === true);
-        if (!unsubscribeAdminAvailability) {
-          unsubscribeAdminAvailability = await subscribeAdminAvailability((available) => {
-            createAdminStatusIndicator(available);
-            if (document.getElementById('supportChannelsModalRoot')) openSupportChannelsModal();
-          }, (error) => console.warn('[common] admin availability realtime failed', error));
-        }
-      } catch (error) {
-        console.warn('[common] admin availability initialization failed', error);
-        adminAvailabilityInitialization = null;
-      }
-    })();
-  }
-  return adminAvailabilityInitialization;
+  return Promise.resolve(cachedSettings.adminAvailability === true);
 };
 
 // Check if user is fully verified (email + phone/account active)
@@ -511,14 +493,6 @@ export const initCommonPage = async () => {
     });
   }
   void initAdminAvailabilityIndicator();
-  // Apply image size settings on realtime updates
-  try {
-    const { subscribeSiteSettings: subSettings } = await import('../services/settings-service.js');
-    subSettings((newSettings) => {
-      applyImageSizeSettings(newSettings);
-    });
-  } catch {}
-
   if (!document.body.dataset.commonReady) {
     document.body.dataset.commonReady = 'true';
     document.getElementById('themeToggle')?.addEventListener('click', () => {

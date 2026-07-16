@@ -3,7 +3,7 @@
   const ID = 'hudSkeletonLoader';
   const startedAt = Date.now();
   const minimumVisibleMs = 180;
-  const maximumVisibleMs = 2200;
+  const maximumVisibleMs = 45000;
   let removed = false;
 
   const markup = `
@@ -39,6 +39,7 @@
     </div>`;
 
   const mount = () => {
+    try { if (localStorage.getItem('hud_full_catalog_ready_v1')) return; } catch {}
     if (document.getElementById(ID) || document.documentElement.dataset.appReady === 'true') return;
     const root = document.createElement('div');
     root.id = ID;
