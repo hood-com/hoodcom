@@ -39,7 +39,10 @@
     </div>`;
 
   const mount = () => {
-    try { if (localStorage.getItem('hud_full_catalog_ready_v1')) return; } catch {}
+    try {
+      const lastReady = Number(localStorage.getItem('hud_full_catalog_ready_v1') || 0);
+      if (lastReady && Date.now() - lastReady < 30 * 60 * 1000) return;
+    } catch {}
     if (document.getElementById(ID) || document.documentElement.dataset.appReady === 'true') return;
     const root = document.createElement('div');
     root.id = ID;

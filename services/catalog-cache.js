@@ -22,5 +22,9 @@ export const setSnapshot = async (key, value) => {
 };
 export const clearSnapshots = async () => { const db=await openDB(); if(db) await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}); try{localStorage.removeItem(READY_KEY);}catch{} };
 export const markFullCatalogReady = () => { try { localStorage.setItem(READY_KEY, String(Date.now())); } catch {} };
-export const isFullCatalogReady = () => { try { return Boolean(localStorage.getItem(READY_KEY)); } catch { return false; } };
+export const getFullCatalogTimestamp = () => { try { return Number(localStorage.getItem(READY_KEY) || 0); } catch { return 0; } };
+export const isFullCatalogReady = (maxAgeMs = 30 * 60 * 1000) => {
+  const timestamp = getFullCatalogTimestamp();
+  return timestamp > 0 && Date.now() - timestamp < maxAgeMs;
+};
 export const FULL_CATALOG_KEY = 'full-catalog-v1';

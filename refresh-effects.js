@@ -6,17 +6,17 @@
   const ensureLayer = () => {
     if (canvas) return;
     canvas = document.createElement('canvas'); canvas.id = 'hudRefreshParticles';
-    canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio;
+    const ratio=Math.min(devicePixelRatio||1,1.5); canvas.width=innerWidth*ratio; canvas.height=innerHeight*ratio;
     canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:2147483500;pointer-events:none;';
-    context = canvas.getContext('2d'); context.scale(devicePixelRatio, devicePixelRatio); document.body.append(canvas);
+    context=canvas.getContext('2d',{alpha:true}); context.scale(ratio,ratio); document.body.append(canvas);
     message = document.createElement('div'); message.className = 'hud-refresh-success-text'; document.body.append(message);
   };
-  const resize = () => { if (!canvas) return; canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;context=canvas.getContext('2d');context.scale(devicePixelRatio,devicePixelRatio); };
+  const resize = () => { if (!canvas) return; const ratio=Math.min(devicePixelRatio||1,1.5);canvas.width=innerWidth*ratio;canvas.height=innerHeight*ratio;context=canvas.getContext('2d',{alpha:true});context.scale(ratio,ratio); };
   addEventListener('resize', resize, { passive:true });
   const spawn = (button) => {
     ensureLayer(); clearTimeout(endTimer); message.classList.remove('show','error');
     const rect=button?.getBoundingClientRect?.(); buttonCenter=rect?{x:rect.left+rect.width/2,y:rect.top+rect.height/2}:{x:innerWidth-42,y:innerHeight-170};
-    const count=Math.min(360,Math.max(170,Math.round(innerWidth*innerHeight/2600)));
+    const count=Math.min(190,Math.max(90,Math.round(innerWidth*innerHeight/5200)));
     particles=Array.from({length:count},(_,i)=>{const angle=random(0,Math.PI*2),speed=random(2.2,10.5);return{x:buttonCenter.x,y:buttonCenter.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,size:random(1.2,4.2),color:colors[i%colors.length],alpha:1,targetX:null,targetY:null,phase:random(0,6.28)};});
     mode='scatter'; cancelAnimationFrame(frame); animate();
   };
@@ -32,7 +32,7 @@
     particles.forEach((p,i)=>{const t=targets[i%targets.length];p.targetX=t.x+random(-2,2);p.targetY=t.y+random(-2,2);});
     mode='text';message.textContent=text;message.classList.toggle('error',!success);
     setTimeout(()=>message.classList.add('show'),500);
-    endTimer=setTimeout(()=>{message.classList.remove('show');mode='return';particles.forEach(p=>{p.targetX=buttonCenter.x;p.targetY=buttonCenter.y;});setTimeout(cleanup,900);},2500);
+    endTimer=setTimeout(()=>{message.classList.remove('show');mode='return';particles.forEach(p=>{p.targetX=buttonCenter.x;p.targetY=buttonCenter.y;});setTimeout(cleanup,900);},5500);
   };
   const cleanup=()=>{cancelAnimationFrame(frame);canvas?.remove();message?.remove();canvas=null;message=null;particles=[];mode='idle';};
   const animate=()=>{
@@ -40,7 +40,7 @@
     particles.forEach((p,i)=>{
       if(mode==='scatter'){p.vx*=.985;p.vy*=.985;p.vy+=Math.sin(Date.now()/260+p.phase)*.055;p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>innerWidth)p.vx*=-1;if(p.y<0||p.y>innerHeight)p.vy*=-1;}
       else if(mode==='text'||mode==='return'){const force=mode==='text'?.075:.12;p.x+=(p.targetX-p.x)*force;p.y+=(p.targetY-p.y)*force;p.x+=Math.sin(Date.now()/120+p.phase)*(mode==='text'?.35:.1);p.size=mode==='return'?Math.max(.2,p.size*.975):p.size;}
-      context.beginPath();context.fillStyle=p.color;context.globalAlpha=Math.max(.15,p.alpha);context.shadowBlur=14;context.shadowColor=p.color;context.arc(p.x,p.y,p.size,0,Math.PI*2);context.fill();
+      context.beginPath();context.fillStyle=p.color;context.globalAlpha=Math.max(.15,p.alpha);context.shadowBlur=7;context.shadowColor=p.color;context.arc(p.x,p.y,p.size,0,Math.PI*2);context.fill();
     });context.globalAlpha=1;frame=requestAnimationFrame(animate);
   };
   globalThis.HudRefreshFX={start:spawn,success:()=>finish(true),error:()=>finish(false)};

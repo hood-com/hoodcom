@@ -6321,3 +6321,20 @@ body, html {
 @keyframes hud-hint-float{50%{transform:translateY(-4px);filter:brightness(1.12)}}
 @media(max-width:520px){.hud-refresh-hint{right:74px;bottom:215px;max-width:205px;font-size:10px;padding:8px 10px}.hud-refresh-success-text{white-space:normal;width:88vw}}
 @media(prefers-reduced-motion:reduce){.hud-refresh-btn,.hud-refresh-btn::before,.hud-refresh-hint{animation:none!important}}
+
+/* Refresh pill — same visual scale as administration availability pill */
+.refresh-btn.hud-refresh-btn,#hudRefreshBtn {
+  position:fixed!important;right:max(12px,env(safe-area-inset-right))!important;left:auto!important;
+  bottom:calc(88px + env(safe-area-inset-bottom))!important;width:auto!important;height:auto!important;
+  min-width:138px!important;max-width:min(210px,calc(100vw - 32px))!important;min-height:42px!important;
+  padding:10px 16px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+  color:#100d00!important;background:linear-gradient(135deg,#ffe55c,#ffd000,#c99d00)!important;
+  border:1px solid rgba(255,244,170,.9)!important;font-family:'Tajawal',sans-serif!important;font-size:13px!important;font-weight:900!important;line-height:1.25!important;white-space:nowrap!important;
+}
+.refresh-button-label{display:inline-block;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+#hudRefreshHint,.hud-refresh-hint{display:none!important;}
+#hudRefreshParticles{z-index:2147483640!important;}
+.hud-refresh-success-text{z-index:2147483641!important;}
+@media(max-width:520px){
+ .refresh-btn.hud-refresh-btn,#hudRefreshBtn{right:12px!important;bottom:90px!important;min-width:132px!important;min-height:42px!important;padding:9px 13px!important;font-size:11px!important;}
+}

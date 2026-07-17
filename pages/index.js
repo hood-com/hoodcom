@@ -2,7 +2,7 @@ import { initCommonPage } from './common.js';
 import authStore from '../stores/auth-store.js';
 import { loadCategories } from '../stores/category-store.js';
 import { getCachedCategories } from '../services/category-service.js';
-import { getSnapshot, setSnapshot } from '../services/catalog-cache.js';
+import { getSnapshot, isFullCatalogReady, setSnapshot } from '../services/catalog-cache.js';
 import { getSiteSettings, renderFeaturedOffers, renderDynamicContacts, renderHoodAbout, renderContactPlatforms } from '../services/settings-service.js';
 import { initReviews, submitReview } from '../services/review-service.js';
 import CategoryCard from '../components/CategoryCard.js';
@@ -98,7 +98,7 @@ export const initHomePage = async () => {
 
   // Cache-first: after the first complete download, navigation never refetches the catalog.
   const cached = await getCachedCategories();
-  if (cached.length) {
+  if (cached.length && isFullCatalogReady()) {
     categories = cached; renderCategories(); renderFeatured();
     const reviewCache = await getSnapshot('public-reviews-v1');
     if (Array.isArray(reviewCache?.reviews)) renderReviews(reviewCache.reviews);

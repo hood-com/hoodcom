@@ -3,8 +3,9 @@ import uiStore, { toggleTheme } from '../stores/ui-store.js';
 import {
   initBackTop, initMenuControls, initNavScroll, injectIcons, showToast,
   refreshActiveToastTranslation, createAdminStatusIndicator, closeMobileMenu,
-  initRefreshButton
+  initRefreshButton, refreshAllData
 } from '../utils/dom-utils.js';
+import { getFullCatalogTimestamp } from '../services/catalog-cache.js';
 import { initTranslationSystem, subscribeLanguage, t } from '../utils/i18n.js';
 import { getUserBalance } from '../services/balance-service.js';
 import {
@@ -478,6 +479,25 @@ const initSearchModal = () => {
   });
 };
 
+let automaticRefreshTimer = null;
+let automaticRefreshRunning = false;
+const initAutomaticThirtyMinuteRefresh = () => {
+  if (automaticRefreshTimer) return automaticRefreshTimer;
+  const check = async () => {
+    const timestamp = getFullCatalogTimestamp();
+    if (!timestamp || Date.now() - timestamp < 30 * 60 * 1000 || automaticRefreshRunning) return;
+    automaticRefreshRunning = true;
+    try {
+      await refreshAllData({ silent: true });
+      globalThis.dispatchEvent?.(new CustomEvent('hud:auto-refresh-complete'));
+    } catch (error) { console.warn('[common] automatic refresh deferred', error); }
+    finally { automaticRefreshRunning = false; }
+  };
+  automaticRefreshTimer = globalThis.setInterval(check, 60 * 1000);
+  void check();
+  return automaticRefreshTimer;
+};
+
 export const initCommonPage = async () => {
   const theme = uiStore.getState().theme;
   document.documentElement.dataset.theme = theme;
@@ -485,6 +505,7 @@ export const initCommonPage = async () => {
   renderAdminMenuLink();
   initAdminLinkPurge();
   initRefreshUI();
+  initAutomaticThirtyMinuteRefresh();
   bindSupportModalTriggers();
   if (!unsubscribeLanguageChanges) {
     unsubscribeLanguageChanges = subscribeLanguage(() => {

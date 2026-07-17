@@ -299,11 +299,13 @@ const setRefreshButtonState = (button, refreshing) => {
   if (!button) return;
   const iconEl = button.querySelector('[data-icon="refresh"], .refresh-icon');
   const spinner = button.querySelector('.refresh-spinner');
+  const label = button.querySelector('.refresh-button-label');
   button.classList.toggle('refreshing', refreshing);
   button.disabled = refreshing;
   button.setAttribute('aria-busy', String(refreshing));
   if (iconEl) iconEl.style.display = refreshing ? 'none' : 'inline-flex';
   if (spinner) spinner.style.display = refreshing ? 'inline-block' : 'none';
+  if (label) label.textContent = refreshing ? 'يتم التحديث…' : 'اضغط للتحديث';
 };
 
 export const refreshAllData = async (options = {}) => {
@@ -456,8 +458,9 @@ export const createRefreshButton = (options = {}) => {
   button.setAttribute('aria-label', 'تحديث الموقع');
   button.setAttribute('title', 'تحديث جميع بيانات الموقع');
   button.innerHTML = `
-    <span class="refresh-icon" data-icon="refresh" data-size="22" aria-hidden="true"></span>
+    <span class="refresh-icon" data-icon="refresh" data-size="19" aria-hidden="true"></span>
     <span class="refresh-spinner" style="display:none;" aria-hidden="true"></span>
+    <span class="refresh-button-label">اضغط للتحديث</span>
   `;
   button.addEventListener('click', handleRefresh);
 
@@ -469,14 +472,7 @@ export const createRefreshButton = (options = {}) => {
     root.body.appendChild(button);
   }
 
-  let hint = root.getElementById('hudRefreshHint');
-  if (!hint) {
-    hint = root.createElement('div');
-    hint.id = 'hudRefreshHint';
-    hint.className = 'hud-refresh-hint';
-    hint.textContent = 'اضغط للتحديث ومواكبة آخر الأسعار والعروض والتحديثات';
-    root.body.appendChild(hint);
-  }
+  root.getElementById('hudRefreshHint')?.remove();
   injectIcons(button);
   return button;
 };
