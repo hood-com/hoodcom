@@ -32,7 +32,7 @@
     particles.forEach((p,i)=>{const t=targets[i%targets.length];p.targetX=t.x+random(-2,2);p.targetY=t.y+random(-2,2);});
     mode='text';message.textContent=text;message.classList.toggle('error',!success);
     setTimeout(()=>message.classList.add('show'),500);
-    endTimer=setTimeout(()=>{message.classList.remove('show');mode='return';particles.forEach(p=>{p.targetX=buttonCenter.x;p.targetY=buttonCenter.y;});setTimeout(cleanup,900);},5500);
+    endTimer=setTimeout(()=>{message.classList.remove('show');mode='return';particles.forEach(p=>{p.targetX=buttonCenter.x;p.targetY=buttonCenter.y;});setTimeout(cleanup,900);},4500);
   };
   const cleanup=()=>{cancelAnimationFrame(frame);canvas?.remove();message?.remove();canvas=null;message=null;particles=[];mode='idle';};
   const animate=()=>{

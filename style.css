@@ -6338,3 +6338,8 @@ body, html {
 @media(max-width:520px){
  .refresh-btn.hud-refresh-btn,#hudRefreshBtn{right:12px!important;bottom:90px!important;min-width:132px!important;min-height:42px!important;padding:9px 13px!important;font-size:11px!important;}
 }
+
+/* Login onboarding notice */
+.login-first-step-notice{display:flex;gap:11px;align-items:flex-start;margin:0 0 20px;padding:12px 13px;border:1px solid rgba(255,215,0,.25);border-radius:15px;background:rgba(255,215,0,.065);color:var(--text-primary);text-align:right}
+.login-first-step-notice__icon{width:25px;height:25px;flex:0 0 25px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gradient-gold);color:#090909;font-weight:900;box-shadow:0 0 14px rgba(255,215,0,.3)}
+.login-first-step-notice strong{display:block;color:var(--gold);font-size:13px;margin-bottom:2px}.login-first-step-notice p{margin:0;color:var(--text-secondary);font-size:11px;line-height:1.65}

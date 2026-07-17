@@ -424,22 +424,36 @@ export const handleRefresh = async (event) => {
 
   setRefreshButtonState(button, true);
   globalThis.HudRefreshFX?.start?.(button);
+  showToast('toast_info_loading', 'info', { duration: 1600 });
+
+  const refreshPromise = refreshAllData();
+  let timeoutId;
+  const outcome = await Promise.race([
+    refreshPromise.then(() => ({ status: 'success' })).catch((error) => ({ status: 'error', error })),
+    new Promise((resolve) => { timeoutId = globalThis.setTimeout(() => resolve({ status: 'background' }), 10000); })
+  ]);
 
   try {
-    showToast('toast_info_loading', 'info', { duration: 1800 });
-    await refreshAllData();
-    showToast('✅ تم تحديث الموقع بنجاح', 'success');
+    if (outcome.status === 'error') {
+      console.error('[refresh] failed', outcome.error);
+      globalThis.HudRefreshFX?.error?.();
+      showToast('❌ حدث خطأ أثناء التحديث', 'error');
+      return false;
+    }
+
+    globalThis.clearTimeout(timeoutId);
     globalThis.HudRefreshFX?.success?.();
-    // Soft re-render hooks
-    try {
-      globalThis.dispatchEvent?.(new CustomEvent('hud:categories-updated', { detail: { source: 'refresh-btn' } }));
-    } catch {}
+    showToast('✅ تم التحديث بنجاح', 'success');
+
+    if (outcome.status === 'background') {
+      // Release the UI at ten seconds. The same operation continues silently and updates caches/events when ready.
+      refreshPromise.then(() => {
+        try { globalThis.dispatchEvent?.(new CustomEvent('hud:refresh-background-complete')); } catch {}
+      }).catch((error) => console.warn('[refresh] background completion failed', error));
+    } else {
+      try { globalThis.dispatchEvent?.(new CustomEvent('hud:refresh-complete-visible')); } catch {}
+    }
     return true;
-  } catch (error) {
-    console.error('[refresh] failed', error);
-    globalThis.HudRefreshFX?.error?.();
-    showToast('❌ حدث خطأ أثناء التحديث', 'error');
-    return false;
   } finally {
     setRefreshButtonState(button, false);
   }

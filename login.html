@@ -99,7 +99,7 @@ select.form-input:disabled{opacity:0.5}
 #googleContinueBtn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 @media(max-width:480px){.login-card{padding:28px 22px;border-radius:24px}.login-logo img{max-width:130px}.login-back-link{top:12px;right:12px;font-size:12px;padding:8px 14px}.form-row{grid-template-columns:1fr}}
 </style>
-<script src="refresh-effects.js?v=20260716-2" defer></script>
+<script src="refresh-effects.js?v=20260716-3" defer></script>
 </head>
 <body>
 
@@ -114,6 +114,11 @@ select.form-input:disabled{opacity:0.5}
     </div>
 
     <!-- ==================== نموذج تسجيل الدخول ==================== -->
+    <div class="login-first-step-notice" role="note">
+      <span class="login-first-step-notice__icon" aria-hidden="true">!</span>
+      <div><strong>مستخدم جديد؟</strong><p>أول خطوة هي إنشاء حساب جديد وإكمال بياناتك، وبعدها يمكنك تسجيل الدخول برقم هاتفك وكلمة المرور.</p></div>
+    </div>
+
     <form class="login-form active" id="loginForm" novalidate>
       <div class="form-group">
         <label class="form-label" for="loginUsername">
@@ -425,6 +430,6 @@ select.form-input:disabled{opacity:0.5}
 
 <!-- Legacy compatibility facade: auth-service.js replaces its methods with the canonical ES module implementation. -->
 <script src="admin-gate.legacy.js"></script>
-<script type="module" src="main.js?v=20260716-7"></script>
+<script type="module" src="main.js?v=20260716-8"></script>
 </body>
 </html>
