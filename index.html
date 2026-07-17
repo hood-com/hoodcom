@@ -69,6 +69,7 @@
 }
 </script>
 <script src="skeleton-loader.js?v=20260716-3" defer></script>
+<script src="refresh-effects.js?v=20260716-1" defer></script>
 </head>
 <body>
 
@@ -274,12 +275,7 @@
     <p class="section-desc" data-i18n="choose_category">اختر القسم وادخل لشراء منتجاتك</p>
   </div>
 
-  <div class="categories-grid" id="homeCategoriesGrid">
-    <div style="grid-column:1/-1; text-align:center; padding:50px 20px;">
-      <div style="display:inline-block; width:50px; height:50px; border:4px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-      <h3 style="margin:16px 0 8px; color:var(--gold);" data-i18n="loading">جاري التحميل...</h3>
-    </div>
-  </div>
+  <div class="categories-grid" id="homeCategoriesGrid"></div>
 </section>
 
 <!-- ===== آراء العملاء: مباشرة بعد الأقسام ===== -->
@@ -297,17 +293,10 @@
   </div>
 
   <!-- نموذج التعليق يُبنى بعد التحقق من جلسة المستخدم لمنع ظهوره للزائر ولو للحظة -->
-  <div class="review-form-card" id="reviewFormContainer" aria-live="polite">
-    <div class="review-gate-card"><p>جاري التحقق من تسجيل الدخول...</p></div>
-  </div>
+  <div class="review-form-card" id="reviewFormContainer" aria-live="polite"></div>
 
   <!-- قائمة التعليقات -->
-  <div class="reviews-list" id="reviewsList">
-    <div style="text-align:center; padding:30px 20px; color:var(--text-secondary);">
-      <div style="display:inline-block; width:36px; height:36px; border:3px solid var(--gold); border-top-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></div>
-      <p style="margin-top:12px;">جاري تحميل التعليقات...</p>
-    </div>
-  </div>
+  <div class="reviews-list" id="reviewsList"></div>
 </section>
 
 <!-- ===== الحقول المخصصة ===== -->

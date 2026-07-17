@@ -6284,3 +6284,40 @@ body, html {
   .category-info,.items-grid .item-info,#modalOffers .offer-info{padding:11px 8px 13px!important;}
   .category-info h3,.items-grid .item-info h3,#modalOffers .offer-info strong{font-size:14px!important;}
 }
+
+/* ============================================
+   HUD COM — Refresh energy effect v1
+============================================ */
+.hud-refresh-btn {
+  isolation:isolate;overflow:visible!important;
+  animation:hud-refresh-breathe 1.8s ease-in-out infinite!important;
+  box-shadow:0 0 0 0 rgba(255,215,0,.55),0 0 24px rgba(255,215,0,.65),0 8px 30px rgba(0,0,0,.45)!important;
+}
+.hud-refresh-btn::before {
+  content:'';position:absolute;inset:-7px;border-radius:inherit;z-index:-1;
+  background:conic-gradient(from 0deg,transparent,#ffd700,transparent,#fff2a0,transparent);
+  filter:blur(7px);opacity:.68;animation:hud-refresh-orbit 2.4s linear infinite;
+}
+.hud-refresh-btn.refreshing,.hud-refresh-btn[aria-busy="true"] { animation:hud-refresh-charge .55s ease-in-out infinite alternate!important; }
+.hud-refresh-hint {
+  position:fixed;z-index:955;right:82px;bottom:220px;max-width:min(270px,calc(100vw - 125px));
+  padding:9px 13px;border:1px solid rgba(255,215,0,.28);border-radius:13px 13px 3px 13px;
+  background:rgba(16,16,16,.91);color:#f4df76;font-size:11px;font-weight:700;line-height:1.5;text-align:right;
+  box-shadow:0 7px 22px rgba(0,0,0,.35),0 0 14px rgba(255,215,0,.08);backdrop-filter:blur(12px);
+  pointer-events:none;animation:hud-hint-float 3s ease-in-out infinite;
+}
+.hud-refresh-success-text {
+  position:fixed;z-index:2147483600;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);
+  width:max-content;max-width:90vw;padding:16px 24px;border-radius:18px;text-align:center;direction:rtl;
+  color:#fff4a8;font:900 clamp(25px,7vw,54px)/1.4 'Tajawal',sans-serif;letter-spacing:.02em;
+  text-shadow:0 0 8px #ffd700,0 0 22px #ffd700,0 0 45px rgba(255,183,0,.85);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .55s cubic-bezier(.2,1.7,.3,1),visibility .35s;
+}
+.hud-refresh-success-text.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1);}
+.hud-refresh-success-text.error{color:#ffc0c7;text-shadow:0 0 9px #ff3d57,0 0 28px #ff3d57;}
+@keyframes hud-refresh-breathe{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,215,0,.5),0 0 20px rgba(255,215,0,.5)}50%{transform:scale(1.08);box-shadow:0 0 0 12px rgba(255,215,0,0),0 0 38px rgba(255,215,0,.9)}}
+@keyframes hud-refresh-orbit{to{transform:rotate(360deg)}}
+@keyframes hud-refresh-charge{to{transform:scale(.88) rotate(15deg);filter:brightness(1.45)}}
+@keyframes hud-hint-float{50%{transform:translateY(-4px);filter:brightness(1.12)}}
+@media(max-width:520px){.hud-refresh-hint{right:74px;bottom:215px;max-width:205px;font-size:10px;padding:8px 10px}.hud-refresh-success-text{white-space:normal;width:88vw}}
+@media(prefers-reduced-motion:reduce){.hud-refresh-btn,.hud-refresh-btn::before,.hud-refresh-hint{animation:none!important}}

@@ -421,11 +421,13 @@ export const handleRefresh = async (event) => {
   if (!button || button.disabled) return false;
 
   setRefreshButtonState(button, true);
+  globalThis.HudRefreshFX?.start?.(button);
 
   try {
     showToast('toast_info_loading', 'info', { duration: 1800 });
     await refreshAllData();
     showToast('✅ تم تحديث الموقع بنجاح', 'success');
+    globalThis.HudRefreshFX?.success?.();
     // Soft re-render hooks
     try {
       globalThis.dispatchEvent?.(new CustomEvent('hud:categories-updated', { detail: { source: 'refresh-btn' } }));
@@ -433,6 +435,7 @@ export const handleRefresh = async (event) => {
     return true;
   } catch (error) {
     console.error('[refresh] failed', error);
+    globalThis.HudRefreshFX?.error?.();
     showToast('❌ حدث خطأ أثناء التحديث', 'error');
     return false;
   } finally {
@@ -466,6 +469,14 @@ export const createRefreshButton = (options = {}) => {
     root.body.appendChild(button);
   }
 
+  let hint = root.getElementById('hudRefreshHint');
+  if (!hint) {
+    hint = root.createElement('div');
+    hint.id = 'hudRefreshHint';
+    hint.className = 'hud-refresh-hint';
+    hint.textContent = 'اضغط للتحديث ومواكبة آخر الأسعار والعروض والتحديثات';
+    root.body.appendChild(hint);
+  }
   injectIcons(button);
   return button;
 };

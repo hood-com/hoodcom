@@ -110,7 +110,7 @@
       border-color:var(--gold); outline:none;
     }
   </style>
-<script src="skeleton-loader.js?v=20260716-3" defer></script>
+<script src="refresh-effects.js?v=20260716-1" defer></script>
 </head>
 <body>
 
@@ -177,10 +177,7 @@
 
       <!-- محتوى: قائمة خدمات التغذية الديناميكية -->
       <div class="sub-tab-content active" id="subTabContentRequest">
-        <div id="depositServicesGrid" class="services-grid">
-          <div style="grid-column:1/-1; text-align:center; padding:30px; color:#aaa;">
-            جاري تحميل خدمات التغذية...
-          </div>
+        <div id="depositServicesGrid" class="services-grid"></div>
         </div>
         <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:20px;">
           اضغط على أي خدمة أعلاه لفتح نموذج تعبئة البيانات الخاص بها.
@@ -195,8 +192,7 @@
             <span data-icon="refresh" data-size="14"></span> تحديث
           </button>
         </div>
-        <div id="depositHistoryListContainer">
-          <div style="text-align:center; padding:40px 20px; color:var(--text-secondary);">جاري تحميل السجل...</div>
+        <div id="depositHistoryListContainer"></div>
         </div>
       </div>
     </div>
@@ -210,8 +206,7 @@
         </p>
       </div>
 
-      <div id="withdrawServicesGrid" class="services-grid">
-        <div style="grid-column:1/-1; text-align:center; padding:30px; color:#aaa;">جاري تحميل خدمات الاسترداد...</div>
+      <div id="withdrawServicesGrid" class="services-grid"></div>
       </div>
 
       <!-- سجل الاسترداد -->
