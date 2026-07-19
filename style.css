@@ -6356,3 +6356,19 @@ main#pageContent{padding-top:clamp(88px,11vh,112px)!important;min-height:60vh;}
 @keyframes catalog-inline-shimmer{to{transform:translateX(-110%)}}
 [data-theme="light"] .catalog-card-skeleton{background:#ededed;border-color:#ddd}[data-theme="light"] .catalog-card-skeleton span{background:#ddd}
 @media(prefers-reduced-motion:reduce){.catalog-card-skeleton span::after{animation:none}}
+
+/* Static refresh glow — no rotating rectangular halo */
+.refresh-btn.hud-refresh-btn::before,#hudRefreshBtn::before {
+  content:''!important;
+  position:absolute!important;
+  inset:-6px!important;
+  border-radius:999px!important;
+  z-index:-1!important;
+  background:rgba(255,215,0,.20)!important;
+  filter:blur(9px)!important;
+  opacity:.78!important;
+  transform:none!important;
+  animation:none!important;
+  box-shadow:0 0 18px rgba(255,215,0,.58),0 0 34px rgba(255,184,0,.28)!important;
+  pointer-events:none!important;
+}
