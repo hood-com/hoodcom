@@ -124,8 +124,17 @@ const rawCategoryById = (id) => categoryCache.find((category) => category.id ===
 export const loadCategoriesFromFirebase = async () => {
   try {
     const db = await getDB();
-    const remote = await db.getCollection('categories');
-    const legacyIds = remote.filter(hasMissingOfferSecret).map((category) => String(category.id));
+    let remote;
+    if (globalThis.__HUD_ADMIN_AUTHENTICATED__ === true) {
+      remote = await db.getCollection('categories');
+    } else {
+      const response = await fetch('/.netlify/functions/catalog-bundle', { headers: { accept: 'application/json' } });
+      if (!response.ok) throw new Error('تعذر تحميل حزمة الكتالوج');
+      const payload = await response.json();
+      remote = Array.isArray(payload.categories) ? payload.categories : [];
+    }
+    const legacyIds = globalThis.__HUD_ADMIN_AUTHENTICATED__ === true
+      ? remote.filter(hasMissingOfferSecret).map((category) => String(category.id)) : [];
     categoryCache = remote.map(normalizeCategory).sort((a, b) => a.order - b.order);
     persistCache();
     await setSnapshot(FULL_CATALOG_KEY, { categories: withoutOfferSecrets(categoryCache), cachedAt: Date.now() }).catch(() => {});

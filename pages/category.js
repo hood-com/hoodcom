@@ -8,7 +8,7 @@ import CategoryCard from '../components/CategoryCard.js';
 import ProductCard from '../components/ProductCard.js';
 import { escapeHTML, safeURL } from '../utils/sanitizers.js';
 import { formatPrice } from '../utils/formatters.js';
-import { injectIcons, showToast } from '../utils/dom-utils.js';
+import { hydrateCatalogImages, injectIcons, showToast } from '../utils/dom-utils.js';
 
 let categories = [];
 let currentPurchase = null;
@@ -45,9 +45,10 @@ const openProduct = (productId) => {
   const offers = (item.offers || []).filter((offer) => offer.status !== 'unavailable');
   if (offersTarget) offersTarget.innerHTML = offers.length ? offers.map((offer) => {
     const image = safeURL(offer.image || item.image, 'content-placeholder.svg');
-    return `<article class="offer-card catalog-choice-card" role="button" tabindex="0" data-action="buy-offer" data-product-id="${escapeHTML(item.id)}" data-offer-id="${escapeHTML(offer.id || '')}"><div class="offer-image-wrap"><img src="${escapeHTML(image)}" alt="${escapeHTML(offer.name || item.name)}" loading="lazy" decoding="async" width="420" height="300"></div><div class="offer-info"><strong>${escapeHTML(offer.name || item.name)}</strong><p>${escapeHTML(offer.description || offer.desc || '')}</p></div></article>`;
+    return `<article class="offer-card catalog-choice-card" role="button" tabindex="0" data-action="buy-offer" data-product-id="${escapeHTML(item.id)}" data-offer-id="${escapeHTML(offer.id || '')}"><div class="offer-image-wrap"><img src="content-placeholder.svg" data-catalog-src="${escapeHTML(image)}" alt="${escapeHTML(offer.name || item.name)}" loading="lazy" decoding="async" width="420" height="300"></div><div class="offer-info"><strong>${escapeHTML(offer.name || item.name)}</strong><p>${escapeHTML(offer.description || offer.desc || '')}</p></div></article>`;
   }).join('') : '<div class="empty-state">لا توجد عروض متاحة</div>';
   openLayer('itemModal', 'itemModalOverlay'); injectIcons();
+  requestAnimationFrame(() => hydrateCatalogImages(offersTarget || document));
 };
 
 const startPurchase = (productId, offerId) => {
@@ -100,6 +101,7 @@ const renderPage = (categoryId) => {
   }
   const menu = document.getElementById('menuCategories'); if (menu) menu.innerHTML = categories.map((entry) => `<a class="menu-link" href="category.html?id=${encodeURIComponent(entry.id)}">${escapeHTML(entry.name)}</a>`).join('');
   injectIcons();
+  requestAnimationFrame(() => hydrateCatalogImages(target));
 };
 
 const bindEvents = () => {

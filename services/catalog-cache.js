@@ -27,4 +27,4 @@ export const isFullCatalogReady = (maxAgeMs = 30 * 60 * 1000) => {
   const timestamp = getFullCatalogTimestamp();
   return timestamp > 0 && Date.now() - timestamp < maxAgeMs;
 };
-export const FULL_CATALOG_KEY = 'full-catalog-v1';
+export const FULL_CATALOG_KEY = 'full-catalog-data-first-v2';

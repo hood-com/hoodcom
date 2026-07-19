@@ -233,6 +233,24 @@ export const bindImagePreview = (input, preview, options = {}) => {
   return () => input.removeEventListener('change', handler);
 };
 
+export const hydrateCatalogImages = (root = document) => {
+  const images = [...root.querySelectorAll('img[data-catalog-src]')];
+  const load = (image) => {
+    const source = image.dataset.catalogSrc;
+    if (!source || image.dataset.catalogLoaded === 'true') return;
+    image.dataset.catalogLoaded = 'true';
+    image.addEventListener('error', () => { image.src = 'content-placeholder.svg'; }, { once: true });
+    image.src = source;
+  };
+  if (!('IntersectionObserver' in globalThis)) { requestAnimationFrame(() => images.forEach(load)); return; }
+  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    observer.unobserve(entry.target);
+    globalThis.setTimeout(() => load(entry.target), 40);
+  }), { rootMargin: '280px 0px' });
+  images.forEach((image) => observer.observe(image));
+};
+
 export const initMenuControls = () => {
   const openButton = byId('menuBtn'); const closeButton = byId('menuCloseBtn'); const overlay = byId('menuOverlay');
   openButton?.addEventListener('click', openMobileMenu);
@@ -513,7 +531,7 @@ export const initRefreshButton = (options = {}) => {
 
 export default Object.freeze({
   injectIcons, scheduleIconInjection, showToast, refreshActiveToastTranslation,
-  readFileAsDataURL, compressImageFile, bindImagePreview,
+  readFileAsDataURL, compressImageFile, bindImagePreview, hydrateCatalogImages,
   openMobileMenu, closeMobileMenu, initNavScroll, initBackTop, initMenuControls, createAdminStatusIndicator,
   updateAdminStatusIndicator,
   createRefreshButton, destroyRefreshButton, handleRefresh, refreshAllData, initRefreshButton

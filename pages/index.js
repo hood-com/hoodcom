@@ -9,7 +9,7 @@ import CategoryCard from '../components/CategoryCard.js';
 import ProductCard from '../components/ProductCard.js';
 import ReviewForm, { ReviewCard } from '../components/ReviewForm.js';
 import { escapeHTML, safeURL } from '../utils/sanitizers.js';
-import { injectIcons, showToast } from '../utils/dom-utils.js';
+import { hydrateCatalogImages, injectIcons, showToast } from '../utils/dom-utils.js';
 import { icon } from '../utils/icons.js';
 
 const byId = (id) => document.getElementById(id);
@@ -26,6 +26,7 @@ const renderCategories = (items = categories) => {
   const menu = byId('menuCategories');
   if (menu) menu.innerHTML = enabled.map((category) => `<a class="menu-link" href="category.html?id=${encodeURIComponent(category.id)}"><div class="menu-link-icon">${icon('layers', 17)}</div><span>${escapeHTML(category.name)}</span></a>`).join('');
   injectIcons();
+  requestAnimationFrame(() => hydrateCatalogImages(grid));
 };
 
 const renderFeatured = () => {
@@ -34,6 +35,7 @@ const renderFeatured = () => {
   const entries = renderFeaturedOffers(categories);
   section.style.display = entries.length ? '' : 'none';
   grid.innerHTML = entries.map((item) => ProductCard({ product: item, currency: item.currency || 'YER' })).join('');
+  requestAnimationFrame(() => hydrateCatalogImages(grid));
 };
 
 const renderContacts = () => {
@@ -114,7 +116,8 @@ export const initHomePage = async () => {
       ])).catch(() => [])
     ]);
     categories = catalog;
-    renderCategories(); renderFeatured(); renderContacts(); renderReviews(reviews);
+    if (categories.length) { renderCategories(); renderFeatured(); }
+    renderContacts(); renderReviews(reviews);
     await setSnapshot('public-reviews-v1', { reviews, cachedAt: Date.now() });
   }
 

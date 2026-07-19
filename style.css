@@ -6343,3 +6343,16 @@ body, html {
 .login-first-step-notice{display:flex;gap:11px;align-items:flex-start;margin:0 0 20px;padding:12px 13px;border:1px solid rgba(255,215,0,.25);border-radius:15px;background:rgba(255,215,0,.065);color:var(--text-primary);text-align:right}
 .login-first-step-notice__icon{width:25px;height:25px;flex:0 0 25px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gradient-gold);color:#090909;font-weight:900;box-shadow:0 0 14px rgba(255,215,0,.3)}
 .login-first-step-notice strong{display:block;color:var(--gold);font-size:13px;margin-bottom:2px}.login-first-step-notice p{margin:0;color:var(--text-secondary);font-size:11px;line-height:1.65}
+
+/* Fixed header clearance: page headings never sit beneath upper controls */
+main#pageContent{padding-top:clamp(88px,11vh,112px)!important;min-height:60vh;}
+@media(max-width:600px){main#pageContent{padding-top:92px!important;}}
+
+/* Inline catalog skeletons: content placeholders, never a blocking screen */
+.catalog-card-skeleton{min-width:0;overflow:hidden;border:1px solid rgba(255,215,0,.11);border-radius:22px;background:#171717;padding:10px;display:flex;flex-direction:column;gap:10px;}
+.catalog-card-skeleton span{display:block;position:relative;overflow:hidden;background:#242424;border-radius:10px;}
+.catalog-card-skeleton span::after{content:'';position:absolute;inset:0;transform:translateX(110%);background:linear-gradient(100deg,transparent,rgba(255,215,0,.07),rgba(255,255,255,.08),transparent);animation:catalog-inline-shimmer 1.5s ease-in-out infinite;}
+.catalog-sk-image{width:100%;aspect-ratio:1/1;border-radius:16px!important}.catalog-sk-title{height:18px;width:62%;margin-inline:auto}.catalog-sk-text{height:12px;width:84%;margin:0 auto 7px}
+@keyframes catalog-inline-shimmer{to{transform:translateX(-110%)}}
+[data-theme="light"] .catalog-card-skeleton{background:#ededed;border-color:#ddd}[data-theme="light"] .catalog-card-skeleton span{background:#ddd}
+@media(prefers-reduced-motion:reduce){.catalog-card-skeleton span::after{animation:none}}
