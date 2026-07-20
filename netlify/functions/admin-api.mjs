@@ -24,9 +24,16 @@ export const handler = async (event) => {
     }
     if (body.operation === 'deleteDocument') { await db.remove(collection, id); result = true; }
     if (body.operation === 'deleteAuthUser') {
-      const response = await fetch(`${process.env.SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` } });
-      if (!response.ok) throw new Error('تعذر حذف مستخدم المصادقة');
-      await db.remove('users', id); result = true;
+      const key=process.env.SUPABASE_SERVICE_ROLE_KEY,url=process.env.SUPABASE_URL,headers={apikey:key,authorization:`Bearer ${key}`};
+      const profile=await normalized.get('users',id),requestedEmail=String(body.email||profile?.email||'').toLowerCase();
+      let authId=id,authUser=null;
+      const direct=await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(id)}`,{headers});
+      if(direct.ok)authUser=await direct.json();
+      if(!authUser&&requestedEmail){const listing=await fetch(`${url}/auth/v1/admin/users?page=1&per_page=1000`,{headers});if(listing.ok){const payload=await listing.json(),users=payload.users||payload;authUser=(users||[]).find((user)=>String(user.email||'').toLowerCase()===requestedEmail)||null;authId=authUser?.id||id;}}
+      if(authUser?.app_metadata?.role==='admin'||String(authId)===String(admin.id))throw new Error('لا يمكن حذف حساب المدير من داخل لوحة الإدارة');
+      if(authUser){const response=await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(authId)}?should_soft_delete=false`,{method:'DELETE',headers});if(!response.ok){const detail=await response.text();throw new Error(`تعذر حذف مستخدم المصادقة: ${detail.slice(0,180)}`);}}
+      await Promise.all([db.remove('users',id),db.remove('user_balances',id)]);
+      result={deletedProfileId:id,deletedAuthId:authUser?authId:null};
     }
     return json(200, { ok: true, result });
   } catch (error) {

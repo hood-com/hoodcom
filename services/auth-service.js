@@ -382,14 +382,14 @@ export const subscribeUsersForAdmin = async (listener, onError) => (await getDB(
  * service role server-side. We intentionally never fall back to deleting only
  * the profile document, because that leaves a login-capable orphan account.
  */
-export const deleteUserAccount = async (userId) => {
+export const deleteUserAccount = async (userId, email = '') => {
   const client = await getClient();
   const { data: sessionData } = await client.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) throw new Error('انتهت جلسة المدير');
   const response = await fetch('/.netlify/functions/admin-api', {
     method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ operation: 'deleteAuthUser', id: String(userId) })
+    body: JSON.stringify({ operation: 'deleteAuthUser', id: String(userId), email: String(email || '') })
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.ok) throw new Error(data.error || 'تعذر حذف الحساب');
