@@ -69,9 +69,12 @@ export const securePurchase = async ({ categoryId, itemId, offerId, customerFiel
   const { data } = await client.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error('يجب تسجيل الدخول لإتمام الشراء');
+  const sessionKey=`hud-order-idem:${categoryId}:${itemId}:${offerId}`;
+  let idempotencyKey=sessionStorage.getItem(sessionKey);
+  if(!idempotencyKey){idempotencyKey=crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;sessionStorage.setItem(sessionKey,idempotencyKey);}
   const response = await fetch('/.netlify/functions/customer-api', {
     method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-    body: JSON.stringify({ operation: 'purchase', categoryId, itemId, offerId, customerFields })
+    body: JSON.stringify({ operation: 'purchase', categoryId, itemId, offerId, customerFields, idempotencyKey })
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload.ok) throw new Error(payload.error || 'تعذر إتمام الطلب');

@@ -109,6 +109,7 @@ const bindLogin = () => {
       if (!validPhone) throw new Error('رقم الهاتف غير صالح أو بيانات الإدارة غير صحيحة');
 
       await loginAction(username, password);
+      void import('../services/workflow-service.js').then((mod)=>mod.logActivity('login',{method:'phone'}));
       showToast('toast_login_success');
       globalThis.setTimeout(redirectAfterLogin, 500);
     } catch (error) {
@@ -149,6 +150,7 @@ const bindRegistration = () => {
     try {
       const verification = await verifyEmailCode(email, code); const verifiedUserId = verification.user?.id || verification.session?.user?.id;
       const user = await register(buildRegistrationData({ verifiedUserId }));
+      void import('../services/workflow-service.js').then((mod)=>mod.logActivity('registration',{country:user.country||'',city:user.city||''}));
       authStore.setState({ user, isAuthenticated: true, isLoading: false, accountStatus: user.accountStatus });
       showToast('toast_register_success'); setTimeout(() => { globalThis.location.href = 'reports.html'; }, 700);
     } catch (error) { showToast('toast_error_register', 'error', { sticky: true }); setButtonLoading(button, false); }

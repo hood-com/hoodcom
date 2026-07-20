@@ -6372,3 +6372,6 @@ main#pageContent{padding-top:clamp(88px,11vh,112px)!important;min-height:60vh;}
   box-shadow:0 0 18px rgba(255,215,0,.58),0 0 34px rgba(255,184,0,.28)!important;
   pointer-events:none!important;
 }
+
+/* Pending workflow center */
+.workflow-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.workflow-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:14px;margin-bottom:10px;border:1px solid rgba(255,215,0,.16);border-radius:15px;background:rgba(255,255,255,.025)}.workflow-row__main{display:flex;flex-direction:column;min-width:0}.workflow-row__main strong{color:var(--gold)}.workflow-row__main span,.workflow-row__main small{color:var(--text-secondary);overflow-wrap:anywhere}.workflow-row__amount{font-weight:900;color:var(--gold);white-space:nowrap}.workflow-row__actions{display:flex;gap:7px}.workflow-row details{grid-column:1/-1}.workflow-row summary{cursor:pointer;color:var(--text-secondary);font-size:12px}.workflow-row pre{direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;padding:10px;background:#090909;border-radius:10px;color:#bbb;font-size:10px}@media(max-width:650px){.workflow-row{grid-template-columns:1fr auto}.workflow-row__actions{grid-column:1/-1}.workflow-row__actions .btn{flex:1}}

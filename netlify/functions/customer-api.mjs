@@ -18,6 +18,10 @@ export const handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
     if (body.operation !== 'purchase') return json(400, { error: 'عملية غير مسموحة' });
+    const idempotencyKey=String(body.idempotencyKey||'').slice(0,120);
+    if(!idempotencyKey)return json(400,{error:'معرف العملية مطلوب'});
+    const existing=(await normalized.list('orders')).find((entry)=>entry.userId===user.id&&entry.idempotencyKey===idempotencyKey);
+    if(existing)return json(200,{ok:true,result:existing,duplicate:true});
     const category = await normalized.get('categories', String(body.categoryId || ''));
     const item = category?.items?.find((entry) => String(entry.id) === String(body.itemId));
     const offer = item?.offers?.find((entry) => String(entry.id) === String(body.offerId)) || item?.offers?.[0];
@@ -33,7 +37,7 @@ export const handler = async (event) => {
       id: orderId, userId: user.id, userEmail: user.email || '', categoryId: category.id, categoryName: category.name,
       itemId: item.id, itemName: item.name, offerId: offer.id, offerName: offer.name || item.name,
       price, total: price, currency: offer.currency || 'YER', customerFields: cleanObject(body.customerFields || {}),
-      paymentMethod: 'account_balance', status: 'pending', createdAt: now, updatedAt: now
+      paymentMethod: 'account_balance', idempotencyKey, status: 'pending', createdAt: now, updatedAt: now
     };
     await db.upsert('user_balances', user.id, { ...(balanceRecord || {}), userId: user.id, balance: balance - price, updatedAt: now });
     try { await db.upsert('orders', orderId, order); }

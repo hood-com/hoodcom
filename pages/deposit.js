@@ -67,7 +67,10 @@ const submitService = async (event) => {
   let debited = false;
   try {
     if (currentService.type === 'withdraw') { await debitUserBalance(user.uid, amount); debited = true; }
-    await addTransaction({ userId: user.uid, userName: user.displayName || user.name, userPhone: user.phone || '', type: currentService.type, amount, serviceId: currentService.id, serviceName: currentService.name, fields, status: 'pending' });
+    const sessionKey=`hud-topup-idem:${currentService.type}:${currentService.id}`;
+    let idempotencyKey=sessionStorage.getItem(sessionKey);
+    if(!idempotencyKey){idempotencyKey=crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;sessionStorage.setItem(sessionKey,idempotencyKey);}
+    await addTransaction({ id:`TX-${idempotencyKey}`,idempotencyKey,userId: user.uid, userName: user.displayName || user.name, userPhone: user.phone || '', type: currentService.type, amount, serviceId: currentService.id, serviceName: currentService.name, fields, status: 'pending' });
     closeModal(); event.currentTarget.reset(); await loadBalance(user.uid); renderHistory(); renderAuthChrome(); showToast('toast_request_submitted');
   } catch (error) {
     if (debited) {

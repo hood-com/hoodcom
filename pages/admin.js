@@ -23,6 +23,7 @@ import {
   subscribeTopupSettings, subscribeTopupTransactions, updateTopupTransactionStatus
 } from '../services/balance-service.js';
 import { confirmOrder, getAllOrdersForAdmin, rejectOrder, subscribeOrdersForAdmin, updateOrderStatus } from '../services/order-service.js';
+import { decideRequest, listPendingForAdmin, requestNotificationPermission, systemNotify } from '../services/workflow-service.js';
 import { escapeAttr, escapeHTML, sanitizeBoolean, sanitizeInput, sanitizeNumber } from '../utils/sanitizers.js';
 import { formatDate, formatPrice, formatStatus } from '../utils/formatters.js';
 import { bindImagePreview, compressImageFile, injectIcons, showToast } from '../utils/dom-utils.js';
@@ -745,6 +746,27 @@ const bindFeaturedDragDrop = () => {
     try { await saveAction(event.target.closest('[data-featured-key]'), () => reorderFeaturedOffers(keys), 'تم تغيير الترتيب ✅'); settings = getSiteSettings(); renderFeatured(); } catch { /* displayed */ }
   });
 };
+let workflowTimer=null,knownPendingIds=new Set();
+const renderPendingCenter=async()=>{
+  const target=byId('pendingWorkflowRows');if(!target)return;
+  try{
+    const payload=await listPendingForAdmin(),pending=payload.pending||[];
+    const currentIds=new Set(pending.map((entry)=>`${entry.workflowCollection}:${entry.id}`));
+    pending.forEach((entry)=>{const key=`${entry.workflowCollection}:${entry.id}`;if(knownPendingIds.size&&!knownPendingIds.has(key))systemNotify('طلب جديد في هود كوم',`${entry.itemName||entry.serviceName||entry.type||'عملية'} — ${entry.amount||entry.total||entry.price||''}`);});
+    knownPendingIds=currentIds;
+    setText('pendingWorkflowCount',pending.length);
+    target.innerHTML=pending.map((entry)=>`<article class="workflow-row"><div class="workflow-row__main"><strong>${escapeHTML(entry.itemName||entry.serviceName||entry.type||'طلب')}</strong><span>${escapeHTML(entry.userName||entry.userEmail||entry.userId||'مستخدم')}</span><small>${escapeHTML(formatDate(entry.createdAt))}</small></div><div class="workflow-row__amount">${formatPrice(Number(entry.amount||entry.total||entry.price||0),entry.currency||'YER')}</div><div class="workflow-row__actions"><button class="btn btn-sm" data-workflow-decision="approve" data-collection="${escapeAttr(entry.workflowCollection)}" data-id="${escapeAttr(entry.id)}">تأكيد</button><button class="btn btn-sm btn-danger" data-workflow-decision="reject" data-collection="${escapeAttr(entry.workflowCollection)}" data-id="${escapeAttr(entry.id)}">رفض</button></div><details><summary>التفاصيل</summary><pre>${escapeHTML(JSON.stringify(entry,null,2))}</pre></details></article>`).join('')||'<div class="empty-state">لا توجد طلبات معلّقة</div>';
+  }catch(error){target.innerHTML=`<div class="error-message">${escapeHTML(error.message)}</div>`;}
+};
+const installPendingCenter=()=>{
+  const tabs=document.querySelector('.admin-tabs');if(!tabs||byId('tab-pending-workflow'))return;
+  const button=document.createElement('button');button.type='button';button.className='admin-tab';button.dataset.tab='pending-workflow';button.innerHTML='🔔 الطلبات المعلّقة <b id="pendingWorkflowCount">0</b>';tabs.prepend(button);
+  const panel=document.createElement('div');panel.className='admin-section';panel.id='tab-pending-workflow';panel.innerHTML='<div class="admin-form"><div class="workflow-head"><h2>مركز الطلبات المعلّقة</h2><button type="button" class="btn btn-outline" id="enableAdminNotifications">تفعيل إشعارات الإدارة</button></div><div id="pendingWorkflowRows"></div></div>';
+  tabs.parentNode.insertBefore(panel,tabs.nextSibling);
+  byId('enableAdminNotifications')?.addEventListener('click',async()=>{const result=await requestNotificationPermission();showToast(result==='granted'?'تم تفعيل الإشعارات ✅':'تعذر تفعيل الإشعارات','info');});
+  panel.addEventListener('click',async(event)=>{const control=event.target.closest('[data-workflow-decision]');if(!control)return;const decision=control.dataset.workflowDecision;const reason=decision==='reject'?(globalThis.prompt('سبب الرفض (اختياري)','')||''):'';try{control.disabled=true;await decideRequest(control.dataset.collection,control.dataset.id,decision,reason);showToast(decision==='approve'?'تم تجهيز العملية ✅':'تم رفض العملية','success');await renderPendingCenter();}catch(error){showToast(error.message,'error');}finally{control.disabled=false;}});
+  void renderPendingCenter();workflowTimer=globalThis.setInterval(renderPendingCenter,4000);
+};
 const bindTabs = () => document.querySelectorAll('.admin-tab').forEach((button) => button.addEventListener('click', () => {
   document.querySelectorAll('.admin-tab').forEach((entry) => entry.classList.remove('active')); document.querySelectorAll('.admin-section').forEach((section) => section.classList.remove('active'));
   button.classList.add('active'); byId(`tab-${button.dataset.tab}`)?.classList.add('active');
@@ -783,13 +805,13 @@ export const initAdminPage = async () => {
   byId('adminAuthScreen')?.remove(); if (byId('adminMainWrap')) byId('adminMainWrap').style.display = '';
   byId('logoutBtn')?.addEventListener('click', () => { stopRealtime(); clearAdminSession(); globalThis.location.href = 'login.html'; });
   try {
-    await loadAll(); populateSettings(); populateTopupSettings(); renderAll(); bindTabs(); bindEditModal(); bindStaticImagePreviews(); bindAddForms(); bindSettingsForms(); bindTopupForms(); bindActions(); bindFeaturedDragDrop(); bindBackup();
+    await loadAll(); populateSettings(); populateTopupSettings(); renderAll(); installPendingCenter(); bindTabs(); bindEditModal(); bindStaticImagePreviews(); bindAddForms(); bindSettingsForms(); bindTopupForms(); bindActions(); bindFeaturedDragDrop(); bindBackup();
     byId('adminVerificationInput')?.addEventListener('input', renderCustomers);
     byId('clearCustomerSearchBtn')?.addEventListener('click', () => { if (byId('adminVerificationInput')) byId('adminVerificationInput').value = ''; renderCustomers(); });
     byId('refreshCustomersBtn')?.addEventListener('click', async (event) => { try { await saveAction(event.currentTarget, async () => { await refreshCustomers(); orders = await getAllOrdersForAdmin(); renderCustomers(); }, 'تم تحديث الحسابات والطلبات ✅'); } catch { /* displayed */ } });
     byId('refreshReviewsBtn')?.addEventListener('click', async () => { await refreshReviews(); renderReviews(); });
     await startRealtime();
-    globalThis.addEventListener('pagehide', stopRealtime, { once: true });
+    globalThis.addEventListener('pagehide', () => { stopRealtime(); if(workflowTimer) clearInterval(workflowTimer); }, { once: true });
   } catch (error) {
     console.error('[admin] initialization failed', error);
     showToast(`تعذر تحميل لوحة التحكم: ${sanitizeInput(error?.message || String(error), 300)}`, 'error', { sticky: true });

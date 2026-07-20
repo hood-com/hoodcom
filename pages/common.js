@@ -498,6 +498,14 @@ const initAutomaticThirtyMinuteRefresh = () => {
   return automaticRefreshTimer;
 };
 
+let userWorkflowTimer=null,userWorkflowStates=new Map();
+const initUserWorkflowNotifications=async()=>{
+  if(userWorkflowTimer||!authStore.getState().user)return;
+  const service=await import('../services/workflow-service.js');
+  const check=async()=>{try{const payload=await service.listMyWorkflow();for(const item of payload.items||[]){const previous=userWorkflowStates.get(item.id);if(previous&&previous!==item.status){const approved=item.status==='completed';const text=approved?'تم تجهيز العملية':'فشلت العملية'+(item.rejectionReason?`: ${item.rejectionReason}`:'');showToast(text,approved?'success':'error',{sticky:!approved});service.systemNotify('تحديث حالة طلبك',text);}userWorkflowStates.set(item.id,item.status);}}catch(error){console.warn('[workflow] user polling delayed',error);}};
+  await check();userWorkflowTimer=globalThis.setInterval(check,7000);
+};
+
 export const initCommonPage = async () => {
   const theme = uiStore.getState().theme;
   document.documentElement.dataset.theme = theme;
@@ -534,6 +542,7 @@ export const initCommonPage = async () => {
     // Don't show error toast on initial load to avoid stuck notifications
   }
   renderAuthChrome();
+  void initUserWorkflowNotifications();
   renderAdminMenuLink();
   const year = document.getElementById('footerYear'); if (year) year.textContent = String(new Date().getFullYear());
   return { auth: authStore.getState(), ui: uiStore.getState() };

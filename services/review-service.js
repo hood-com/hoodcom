@@ -78,6 +78,7 @@ export const submitReview = async (values) => {
     };
 
     await (await getDB()).setDocument('reviews', entry.id, entry);
+    void import('./workflow-service.js').then((mod)=>mod.logActivity('review_submitted',{reviewId:entry.id,rating:entry.rating}));
     reviews.unshift(normalize(entry));
 
     // Notify UI
