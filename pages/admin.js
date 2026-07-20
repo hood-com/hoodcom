@@ -24,6 +24,7 @@ import {
 } from '../services/balance-service.js';
 import { confirmOrder, getAllOrdersForAdmin, rejectOrder, subscribeOrdersForAdmin, updateOrderStatus } from '../services/order-service.js';
 import { decideRequest, listPendingForAdmin, requestNotificationPermission, systemNotify } from '../services/workflow-service.js';
+import { migrateAllImages } from '../services/image-storage-service.js';
 import { escapeAttr, escapeHTML, sanitizeBoolean, sanitizeInput, sanitizeNumber } from '../utils/sanitizers.js';
 import { formatDate, formatPrice, formatStatus } from '../utils/formatters.js';
 import { bindImagePreview, compressImageFile, injectIcons, showToast } from '../utils/dom-utils.js';
@@ -758,6 +759,7 @@ const renderPendingCenter=async()=>{
     target.innerHTML=pending.map((entry)=>`<article class="workflow-row"><div class="workflow-row__main"><strong>${escapeHTML(entry.itemName||entry.serviceName||entry.type||'طلب')}</strong><span>${escapeHTML(entry.userName||entry.userEmail||entry.userId||'مستخدم')}</span><small>${escapeHTML(formatDate(entry.createdAt))}</small></div><div class="workflow-row__amount">${formatPrice(Number(entry.amount||entry.total||entry.price||0),entry.currency||'YER')}</div><div class="workflow-row__actions"><button class="btn btn-sm" data-workflow-decision="approve" data-collection="${escapeAttr(entry.workflowCollection)}" data-id="${escapeAttr(entry.id)}">تأكيد</button><button class="btn btn-sm btn-danger" data-workflow-decision="reject" data-collection="${escapeAttr(entry.workflowCollection)}" data-id="${escapeAttr(entry.id)}">رفض</button></div><details><summary>التفاصيل</summary><pre>${escapeHTML(JSON.stringify(entry,null,2))}</pre></details></article>`).join('')||'<div class="empty-state">لا توجد طلبات معلّقة</div>';
   }catch(error){target.innerHTML=`<div class="error-message">${escapeHTML(error.message)}</div>`;}
 };
+const installImageMigration=()=>{const header=document.querySelector('.admin-header');if(!header||byId('migrateCatalogImagesBtn'))return;const button=document.createElement('button');button.id='migrateCatalogImagesBtn';button.type='button';button.className='btn btn-outline';button.textContent='⚡ نقل الصور إلى CDN';button.addEventListener('click',async()=>{if(!confirm('سيتم نقل صور Base64 الحالية إلى Supabase Storage مع الإبقاء على البيانات آمنة. متابعة؟'))return;try{await saveAction(button,async()=>{const result=await migrateAllImages();await loadAll();renderAll();return result;},'تم نقل الصور إلى CDN بنجاح ✅');}catch{}});header.append(button);};
 const installPendingCenter=()=>{
   const tabs=document.querySelector('.admin-tabs');if(!tabs||byId('tab-pending-workflow'))return;
   const button=document.createElement('button');button.type='button';button.className='admin-tab';button.dataset.tab='pending-workflow';button.innerHTML='🔔 الطلبات المعلّقة <b id="pendingWorkflowCount">0</b>';tabs.prepend(button);
@@ -805,7 +807,7 @@ export const initAdminPage = async () => {
   byId('adminAuthScreen')?.remove(); if (byId('adminMainWrap')) byId('adminMainWrap').style.display = '';
   byId('logoutBtn')?.addEventListener('click', () => { stopRealtime(); clearAdminSession(); globalThis.location.href = 'login.html'; });
   try {
-    await loadAll(); populateSettings(); populateTopupSettings(); renderAll(); installPendingCenter(); bindTabs(); bindEditModal(); bindStaticImagePreviews(); bindAddForms(); bindSettingsForms(); bindTopupForms(); bindActions(); bindFeaturedDragDrop(); bindBackup();
+    await loadAll(); populateSettings(); populateTopupSettings(); renderAll(); installImageMigration(); installPendingCenter(); bindTabs(); bindEditModal(); bindStaticImagePreviews(); bindAddForms(); bindSettingsForms(); bindTopupForms(); bindActions(); bindFeaturedDragDrop(); bindBackup();
     byId('adminVerificationInput')?.addEventListener('input', renderCustomers);
     byId('clearCustomerSearchBtn')?.addEventListener('click', () => { if (byId('adminVerificationInput')) byId('adminVerificationInput').value = ''; renderCustomers(); });
     byId('refreshCustomersBtn')?.addEventListener('click', async (event) => { try { await saveAction(event.currentTarget, async () => { await refreshCustomers(); orders = await getAllOrdersForAdmin(); renderCustomers(); }, 'تم تحديث الحسابات والطلبات ✅'); } catch { /* displayed */ } });

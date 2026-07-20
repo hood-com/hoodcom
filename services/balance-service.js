@@ -293,13 +293,14 @@ export const saveTopupService = async (service) => {
   try {
     const existing = services.find((item) => item.id === String(service?.id));
     const sameTypeCount = services.filter((item) => item.type === (service?.type === 'withdraw' ? 'withdraw' : 'deposit')).length;
-    const entry = normalizeService({
+    let entry = normalizeService({
       ...existing,
       ...service,
       id: service?.id || makeId('svc'),
       order: service?.order || existing?.order || sameTypeCount + 1,
       updatedAt: new Date().toISOString()
     }, sameTypeCount);
+    if(String(entry.image||'').startsWith('data:image/')&&globalThis.__HUD_ADMIN_AUTHENTICATED__===true){entry={...entry,image:await import('./image-storage-service.js').then((mod)=>mod.uploadManagedImage(entry.image,'service',entry.id))};}
     const db = await getDB();
     await db.setDocument('topup_services', entry.id, entry);
     await saveServicesMeta(db);

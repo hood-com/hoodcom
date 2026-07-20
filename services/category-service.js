@@ -156,7 +156,9 @@ export const loadCategoriesFromFirebase = async () => {
 
 export const saveCategoryToFirebase = async (category) => {
   try {
-    const normalized = normalizeCategory({ ...category, updatedAt: new Date().toISOString() }, categoryCache.length);
+    const prepared = globalThis.__HUD_ADMIN_AUTHENTICATED__ === true
+      ? await import('./image-storage-service.js').then((mod) => mod.processCategoryImages(category)) : category;
+    const normalized = normalizeCategory({ ...prepared, updatedAt: new Date().toISOString() }, categoryCache.length);
     const db = await getDB();
     // A successful cloud write is the commit point; this prevents success UI
     // for data that is only present in localStorage.

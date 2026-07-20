@@ -7,6 +7,7 @@ let wallets = DEFAULT_WALLETS.map((wallet) => ({ ...wallet }));
 let selectedWalletId = null;
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
+const managedImage=async(image,id)=>String(image||'').startsWith('data:image/')&&globalThis.__HUD_ADMIN_AUTHENTICATED__===true?import('./image-storage-service.js').then((mod)=>mod.uploadManagedImage(image,'wallet',id)):String(image||'');
 const persist = () => {
   try { globalThis.localStorage?.setItem(STORAGE_KEYS.wallets, JSON.stringify({ wallets })); } catch { /* no-op */ }
 };
@@ -53,12 +54,13 @@ export const saveWalletsToFirebase = async () => {
 };
 
 export const addWallet = async (wallet) => {
+  const walletId=String(wallet?.id || `wallet-${Date.now()}`);
   const entry = {
     ...wallet,
-    id: String(wallet?.id || `wallet-${Date.now()}`),
+    id: walletId,
     name: sanitizeInput(wallet?.name || 'محفظة', 100),
     number: sanitizeInput(wallet?.number || '', 100),
-    image: String(wallet?.image || ''),
+    image: await managedImage(wallet?.image,walletId),
     enabled: wallet?.enabled !== false,
     order: sanitizeNumber(wallet?.order, { min: 0, max: 10000, integer: true, fallback: wallets.length + 1 })
   };
@@ -86,7 +88,7 @@ export const updateWallet = async (id, updates = {}) => {
     id: current.id,
     name: sanitizeInput(updates.name ?? current.name, 100),
     number: sanitizeInput(updates.number ?? current.number, 100),
-    image: String(updates.image ?? current.image ?? ''),
+    image: await managedImage(updates.image ?? current.image,current.id),
     enabled: Object.hasOwn(updates, 'enabled') ? sanitizeBoolean(updates.enabled) : current.enabled !== false,
     order: sanitizeNumber(updates.order ?? current.order, { min: 0, max: 10000, integer: true, fallback: index + 1 })
   };
