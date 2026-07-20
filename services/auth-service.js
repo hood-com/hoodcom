@@ -54,6 +54,14 @@ const readPersistedUser = () => {
   }
 };
 
+export const guardedSignIn = async (identifier, password) => {
+  const response=await fetch('/.netlify/functions/auth-guard',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'login',identifier,password})});
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok||!payload.ok)throw Object.assign(new Error(payload.error||'تعذر تسجيل الدخول'),{code:response.status===429?'rate_limited':'invalid_login',retryAfter:payload.retryAfter});
+  const auth=await getAuth();const {data,error}=await auth.setSession(payload.session);if(error)throw error;
+  return{user:normalizeAuthUser(data.user||payload.user),session:data.session,rawUser:data.user||payload.user};
+};
+
 export const signInWithEmailAndPassword = async (email, password) => {
   try {
     const auth = await getAuth();
@@ -173,8 +181,7 @@ export const login = async (username, password) => {
   try {
     if (!isValidPhone(username)) throw Object.assign(new Error('رقم الهاتف غير صالح'), { code: 'invalid_phone' });
     if (!String(password ?? '')) throw Object.assign(new Error('كلمة المرور مطلوبة'), { code: 'invalid_password' });
-    const email = await resolveLoginEmail(username);
-    const credential = await signInWithEmailAndPassword(email, password);
+    const credential = await guardedSignIn(username, password);
     const db = await getDB();
     const profile = credential.user?.uid ? await db.getDocument('users', credential.user.uid) : null;
     const user = stripManagerOnlyFields({
@@ -215,6 +222,10 @@ export const register = async (userData) => {
     }
     if (!credential.user?.uid) throw new Error('يجب تأكيد البريد الإلكتروني قبل إكمال إنشاء الحساب');
     const localPhone = normalizePhone(phone);
+    const auth=await getAuth(),{data:sessionData}=await auth.getSession(),accessToken=sessionData.session?.access_token;
+    const reserveResponse=await fetch('/.netlify/functions/auth-guard',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${accessToken}`},body:JSON.stringify({action:'reserve-identity',name:userData.name,phone})});
+    const reservePayload=await reserveResponse.json().catch(()=>({}));
+    if(!reserveResponse.ok||!reservePayload.ok)throw new Error(reservePayload.error||'تعذر التحقق من الاسم ورقم الهاتف');
     const profile = {
       ...userData,
       id: credential.user.uid,
@@ -386,7 +397,7 @@ export const deleteUserAccount = async (userId) => {
 };
 
 export const loginAdmin = async (email, password) => {
-  const credential = await signInWithEmailAndPassword(String(email || '').trim().toLowerCase(), String(password || ''));
+  const credential = await guardedSignIn(String(email || '').trim().toLowerCase(), String(password || ''));
   const rawRole = credential.rawUser?.app_metadata?.role;
   if (rawRole !== 'admin') {
     await (await getAuth()).signOut().catch(() => {});
@@ -414,7 +425,7 @@ export const clearAdminSession = async () => {
 export { generateUniqueSecretToken };
 
 export default Object.freeze({
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail,
+  guardedSignIn, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail,
   login, register, logout, getCurrentUser, checkSession, resolveLoginEmail, findUserDocumentByPhone,
   createUserWithSecret, ensureUserSecret, getUserSecret, listUsersForAdmin, searchUsersForAdmin,
   updateUserAccountStatus, setUserVerificationStatus, subscribeUsersForAdmin, deleteUserAccount,

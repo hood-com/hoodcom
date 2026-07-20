@@ -113,7 +113,7 @@ const bindLogin = () => {
       showToast('toast_login_success');
       globalThis.setTimeout(redirectAfterLogin, 500);
     } catch (error) {
-      showToast('toast_error_login', 'error', { sticky: true });
+      showToast(error?.message || 'تعذر تسجيل الدخول', 'error', { sticky: true });
       setButtonLoading(button, false);
     }
   });
