@@ -33,6 +33,10 @@ export const handler = async (event) => {
       if(authUser?.app_metadata?.role==='admin'||String(authId)===String(admin.id))throw new Error('لا يمكن حذف حساب المدير من داخل لوحة الإدارة');
       if(authUser){const response=await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(authId)}?should_soft_delete=false`,{method:'DELETE',headers});if(!response.ok){const detail=await response.text();throw new Error(`تعذر حذف مستخدم المصادقة: ${detail.slice(0,180)}`);}}
       await Promise.all([db.remove('users',id),db.remove('user_balances',id)]);
+      for(const collectionName of ['orders','topup_transactions','identity_index']){
+        const records=await normalized.list(collectionName);
+        await Promise.all(records.filter((entry)=>String(entry.userId||'')===String(id)||String(entry.userId||'')===String(authId)).map((entry)=>db.remove(collectionName,entry.id)));
+      }
       result={deletedProfileId:id,deletedAuthId:authUser?authId:null};
     }
     return json(200, { ok: true, result });

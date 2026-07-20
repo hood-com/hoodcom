@@ -364,10 +364,15 @@ export const deleteServiceField = async (serviceId, fieldId) => {
 export const loadAllUserBalancesFromCloud = async () => {
   try {
     const records = await (await getDB()).getCollection('user_balances');
-    const index = getBalanceIndex();
+    // Rebuild from cloud truth; never retain deleted customers from an old local index.
+    const previous = getBalanceIndex();
+    const index = {};
     records.forEach((record) => {
-      index[record.id] = { ...index[record.id], ...record };
+      index[record.id] = { ...record };
       globalThis.localStorage?.setItem(balanceKey(record.id), Number(record.balance || 0).toFixed(2));
+    });
+    Object.keys(previous).filter((id) => !index[id]).forEach((id) => {
+      try { globalThis.localStorage?.removeItem(balanceKey(id)); } catch {}
     });
     setBalanceIndex(index);
     return Object.values(index);
@@ -381,10 +386,11 @@ export const listRegisteredUsers = async () => {
     const db = await getDB();
     const [users, balances] = await Promise.all([db.getCollection('users'), loadAllUserBalancesFromCloud()]);
     const index = Object.fromEntries(balances.map((record) => [record.id, record]));
-    users.forEach((user) => {
-      index[user.id] = { ...index[user.id], ...user, id: user.id, balance: index[user.id]?.balance ?? Number(user.balance || 0) };
-    });
-    return Object.values(index).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    // A balance without a users document is not a registered customer.
+    return users.map((user) => ({
+      ...index[user.id], ...user, id: user.id,
+      balance: index[user.id]?.balance ?? Number(user.balance || 0)
+    })).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
   } catch (error) {
     console.error('[balance-service] user list failed', error);
     return [];
