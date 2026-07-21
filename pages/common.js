@@ -219,9 +219,9 @@ const isUserFullyVerified = (user) => {
 export const renderAuthChrome = (state = authStore.getState()) => {
   const user = state.user;
   const name = user?.displayName || user?.name || user?.username || 'المستخدم';
-  const email = user?.email || '';
+  const publicIdentity = user?.phone || user?.localPhone || '';
   for (const id of ['navUserName', 'menuUserName']) { const element = document.getElementById(id); if (element) element.textContent = name; }
-  for (const id of ['navUserEmail', 'menuUserEmail']) { const element = document.getElementById(id); if (element) element.textContent = email; }
+  for (const id of ['navUserEmail', 'menuUserEmail']) { const element = document.getElementById(id); if (element) element.textContent = publicIdentity; }
   for (const id of ['navUserInitial', 'menuUserAvatar']) { const element = document.getElementById(id); if (element) element.textContent = name.trim().charAt(0) || 'م'; }
   display(document.getElementById('navUserSection'), Boolean(user), 'block');
   display(document.getElementById('menuUserSection'), Boolean(user), 'block');

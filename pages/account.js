@@ -11,7 +11,7 @@ const statusLabel = (status) => ({ under_confirmation: 'بانتظار تأكي�
 const renderAccount = (user, orders) => {
   const target = document.getElementById('accountContent'); if (!target) return;
   const balance = getUserBalance(user.uid);
-  target.innerHTML = `<section class="account-hero"><div class="account-avatar">${escapeHTML((user.displayName || user.name || 'م').charAt(0))}</div><h1>${escapeHTML(user.displayName || user.name || 'المستخدم')}</h1><p>${escapeHTML(user.email || '')}</p><span class="account-status status-${escapeHTML(user.accountStatus || '')}">${escapeHTML(statusLabel(user.accountStatus))}</span></section>
+  target.innerHTML = `<section class="account-hero"><div class="account-avatar">${escapeHTML((user.displayName || user.name || 'م').charAt(0))}</div><h1>${escapeHTML(user.name || user.displayName || 'المستخدم')}</h1><p dir="ltr">${escapeHTML(user.phone || user.localPhone || '')}</p><span class="account-status status-${escapeHTML(user.accountStatus || '')}">${escapeHTML(statusLabel(user.accountStatus))}</span></section>
     <section class="account-grid">
       <article class="account-card"><h2>الرصيد</h2><strong id="accountPageUserBalance">${formatPrice(balance)}</strong><a class="btn btn-gold" href="deposit.html">تغذية الحساب</a></article>
       <article class="account-card"><h2>بيانات الحساب</h2><dl><dt>الهاتف</dt><dd dir="ltr">${escapeHTML(user.phone || user.localPhone || '')}</dd><dt>البلد/المدينة</dt><dd>${escapeHTML([user.country, user.city].filter(Boolean).join(' — '))}</dd><dt>العنوان</dt><dd>${escapeHTML(user.address || '')}</dd></dl></article>

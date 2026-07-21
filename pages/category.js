@@ -97,7 +97,7 @@ const renderPage = (categoryId) => {
     target.innerHTML = `<section class="section"><div class="section-header"><h1 class="section-title">الأقسام</h1></div><div class="categories-grid">${categories.map((entry) => CategoryCard({ category: entry })).join('')}</div></section>`;
   } else {
     setCurrentCategory(category);
-    target.innerHTML = `<section class="section"><div class="section-header"><a href="category.html" class="btn btn-outline">كل الأقسام</a><h1 class="section-title">${escapeHTML(category.name)}</h1><p>${escapeHTML(category.description || category.desc || '')}</p></div><div class="items-grid">${(category.items || []).map((item) => ProductCard({ product: item })).join('')}</div></section>`;
+    target.innerHTML = `<section class="section"><div class="section-header"><a href="category.html" class="btn btn-outline">كل الأقسام</a><h1 class="section-title">${escapeHTML(category.name)}</h1><p>${escapeHTML(category.description || category.desc || '')}</p></div><div class="items-grid">${(category.items || []).map((item) => ProductCard({ product: item, categoryId: category.id })).join('')}</div></section>`;
   }
   const menu = document.getElementById('menuCategories'); if (menu) menu.innerHTML = categories.map((entry) => `<a class="menu-link" href="category.html?id=${encodeURIComponent(entry.id)}">${escapeHTML(entry.name)}</a>`).join('');
   injectIcons();
@@ -106,7 +106,7 @@ const renderPage = (categoryId) => {
 
 const bindEvents = () => {
   document.addEventListener('click', (event) => {
-    const productButton = event.target.closest('[data-action="select-product"]'); if (productButton) openProduct(productButton.dataset.productId);
+    const productButton = event.target.closest('[data-action="select-product"]'); if (productButton) { event.preventDefault(); openProduct(productButton.dataset.productId); }
     const offerButton = event.target.closest('[data-action="buy-offer"]'); if (offerButton) startPurchase(offerButton.dataset.productId, offerButton.dataset.offerId);
   });
   document.addEventListener('keydown', (event) => {

@@ -300,12 +300,15 @@ export const getCurrentUser = async () => {
   try {
     const auth = await getAuth();
     const { data, error } = await auth.getUser();
-    if (error || !data.user) return readPersistedUser();
-    const persisted = readPersistedUser() || {};
-    return stripManagerOnlyFields({ ...persisted, ...normalizeAuthUser(data.user), uid: data.user.id, id: data.user.id, sessionVersion: SESSION_VERSION });
+    if (error || !data.user) { clearPersistedUser(); return null; }
+    const authUser = normalizeAuthUser(data.user);
+    let profile = null;
+    try { profile = await (await getDB()).getDocument('users', data.user.id); } catch (profileError) { console.warn('[auth-service] profile load delayed', profileError); }
+    return stripManagerOnlyFields({ ...(profile || {}), ...authUser, uid: data.user.id, id: data.user.id, email: data.user.email || '', sessionVersion: SESSION_VERSION });
   } catch (error) {
-    console.warn('[auth-service] current user fallback', error);
-    return readPersistedUser();
+    console.warn('[auth-service] current user rejected', error);
+    clearPersistedUser();
+    return null;
   }
 };
 
@@ -358,6 +361,12 @@ export const updateUserAccountStatus = async (userId, accountStatus, extra = {})
     verifiedAt: ['active', 'verified'].includes(accountStatus) ? new Date().toISOString() : null,
     updatedAt: new Date().toISOString()
   };
+  return (await getDB()).updateDocument('users', String(userId), patch);
+};
+export const updateUserProfileForAdmin = async (userId, updates = {}) => {
+  const allowed = ['name','fullName','phone','localPhone','username','country','city','district','address'];
+  const patch = { updatedAt: new Date().toISOString() };
+  allowed.forEach((key) => { if (updates[key] !== undefined) patch[key] = sanitizeInput(updates[key], key === 'address' ? 300 : 160); });
   return (await getDB()).updateDocument('users', String(userId), patch);
 };
 export const setUserVerificationStatus = async (userId, verified) => updateUserAccountStatus(
@@ -428,7 +437,7 @@ export default Object.freeze({
   guardedSignIn, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail,
   login, register, logout, getCurrentUser, checkSession, resolveLoginEmail, findUserDocumentByPhone,
   createUserWithSecret, ensureUserSecret, getUserSecret, listUsersForAdmin, searchUsersForAdmin,
-  updateUserAccountStatus, setUserVerificationStatus, subscribeUsersForAdmin, deleteUserAccount,
+  updateUserAccountStatus, updateUserProfileForAdmin, setUserVerificationStatus, subscribeUsersForAdmin, deleteUserAccount,
   sendEmailVerificationCode, verifyEmailCode, loginWithGoogle, generateUniqueSecretToken,
   loginAdmin, hasAdminSession, checkAdminSession, clearAdminSession
 });
