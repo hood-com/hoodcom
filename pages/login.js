@@ -72,7 +72,8 @@ const showConfirmation = () => {
   target.innerHTML = `<div><b>الاسم:</b> ${escapeHTML(value('regName'))}</div><div><b>الهاتف:</b> <span dir="ltr">${escapeHTML(fullPhone(value('regPhone')))}</span></div><div><b>البلد:</b> ${escapeHTML(country?.name || '')}</div><div><b>المدينة:</b> ${escapeHTML(city?.name || '')}</div><div><b>المنطقة:</b> ${escapeHTML(value('regDistrict'))}</div><div><b>العنوان:</b> ${escapeHTML(value('regAddress'))}</div>`;
 };
 
-const setButtonLoading = (button, loading) => { if (!button) return; button.disabled = loading; button.classList.toggle('loading', loading); };
+const setButtonLoading = (button, loading) => { if (!button) return; button.disabled = loading || button.dataset.cooldown === 'true'; button.classList.toggle('loading', loading); };
+const startOtpCooldown=(button,seconds=120)=>{if(!button)return;let remaining=seconds;button.dataset.cooldown='true';button.disabled=true;const original='إرسال رمز التأكيد إلى البريد';const tick=()=>{button.textContent=remaining>0?`إعادة الإرسال بعد ${String(Math.floor(remaining/60)).padStart(2,'0')}:${String(remaining%60).padStart(2,'0')}`:original;if(remaining--<=0){delete button.dataset.cooldown;button.disabled=false;clearInterval(timer);}};tick();const timer=setInterval(tick,1000);};
 const redirectAfterLogin = () => {
   const params = new URLSearchParams(globalThis.location.search); const candidate = params.get('redirect') || globalThis.sessionStorage?.getItem('hud_post_login_redirect') || 'index.html';
   // Security fix: block javascript: data: vbscript: and keep original logic intact
@@ -136,7 +137,7 @@ const bindRegistration = () => {
     showError('regEmail', 'regEmailError', !isValidEmailAddress(email)); showError('regPassword', 'regPasswordError', !isValidPassword(password));
     if (!isValidEmailAddress(email) || !isValidPassword(password)) { showToast('toast_password_requirements', 'error'); return; }
     setButtonLoading(button, true);
-    try { await sendEmailVerificationCode(email); element('emailCodeGroup').style.display = 'block'; element('regEmail').dataset.otpSentTo = email; showToast('toast_verification_code_sent'); }
+    try { const result=await sendEmailVerificationCode(email); startOtpCooldown(button,result.retryAfter||120); element('emailCodeGroup').style.display = 'block'; element('regEmail').dataset.otpSentTo = email; showToast('toast_verification_code_sent'); }
     catch (error) { showToast('toast_verification_code_send_failed', 'error'); }
     finally { setButtonLoading(button, false); }
   });

@@ -262,10 +262,8 @@ export const register = async (userData) => {
 };
 
 export const sendEmailVerificationCode = async (email) => {
-  const auth = await getAuth();
-  const { error } = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
-  if (error) throw error;
-  return true;
+  const response=await fetch('/.netlify/functions/auth-guard',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'send-otp',email})});
+  const payload=await response.json().catch(()=>({}));if(!response.ok||!payload.ok)throw Object.assign(new Error(payload.error||'تعذر إرسال الرمز'),{retryAfter:payload.retryAfter});return payload;
 };
 
 export const verifyEmailCode = async (email, token) => {

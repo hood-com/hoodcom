@@ -2,6 +2,7 @@ import { initCommonPage } from './common.js';
 import authStore from '../stores/auth-store.js';
 import { loadCategories, setCurrentCategory, setCurrentItem } from '../stores/category-store.js';
 import { securePurchase } from '../services/order-service.js';
+import { getPurchaseChannels, selectPurchaseChannel } from '../services/workflow-service.js';
 import { getProductFields, getSiteSettings } from '../services/settings-service.js';
 import { getUserBalance, refreshBalance } from '../services/balance-service.js';
 import CategoryCard from '../components/CategoryCard.js';
@@ -70,6 +71,9 @@ const startPurchase = (productId, offerId) => {
   closeItemModal(); openLayer('customerModal', 'customerOverlay');
 };
 
+const channelHref=(channel,message)=>{const value=String(channel.value||'').trim(),encoded=encodeURIComponent(message),digits=value.replace(/\D/gu,'');if(channel.type==='whatsapp')return`https://wa.me/${digits}?text=${encoded}`;if(channel.type==='sms')return`sms:${digits}?body=${encoded}`;if(channel.type==='email')return`mailto:${value.replace(/^mailto:/iu,'')}?subject=${encodeURIComponent('طلب هود كوم')}&body=${encoded}`;if(channel.type==='telegram')return value.startsWith('http')?value:`https://t.me/${value.replace(/^@/u,'')}`;return /^https?:\/\//iu.test(value)?value:'#';};
+const showPurchaseChannels=async(order)=>{let channels=[];try{channels=await getPurchaseChannels();}catch{}if(!channels.length)return;const overlay=document.createElement('div');overlay.className='purchase-channel-overlay';overlay.innerHTML=`<section class="purchase-channel-modal" role="dialog" aria-modal="true"><h2>تسريع تأكيد الطلب</h2><p>طلبك محفوظ وحالته قيد الانتظار. التواصل اختياري ويمكنك اختيار المنصة المناسبة.</p><div class="purchase-channel-list">${channels.map((channel)=>`<a class="purchase-channel-option" href="#" data-channel-id="${escapeHTML(channel.id)}"><strong>${escapeHTML(channel.name)}</strong><small>${escapeHTML(channel.type)}</small></a>`).join('')}</div><button class="btn btn-outline" type="button" data-skip-channel>متابعة بدون تواصل</button></section>`;document.body.append(overlay);overlay.querySelector('[data-skip-channel]')?.addEventListener('click',()=>overlay.remove());overlay.addEventListener('click',async(event)=>{if(event.target===overlay){overlay.remove();return;}const option=event.target.closest('[data-channel-id]');if(!option)return;event.preventDefault();try{const result=await selectPurchaseChannel(order.id,option.dataset.channelId),message=`طلب هود كوم: ${result.tempToken}`;overlay.remove();location.href=channelHref(result.channel,message);}catch(error){showToast(error.message,'error');}});};
+
 const submitPurchase = async (event) => {
   event.preventDefault(); if (!currentPurchase) return;
   const form = event.currentTarget; if (!form.reportValidity()) return;
@@ -83,7 +87,7 @@ const submitPurchase = async (event) => {
       offerId: currentPurchase.offer.id, customerFields: fields
     });
     await refreshBalance(user.uid).catch(() => {});
-    closeCustomerModal(); form.reset(); currentPurchase = null; showToast('toast_order_saved_with_id', 'success', { replacements: { id: order.id } });
+    closeCustomerModal(); form.reset(); currentPurchase = null; showToast('toast_order_saved_with_id', 'success', { replacements: { id: order.id } }); void showPurchaseChannels(order);
   } catch (error) {
     console.error('[category] secure purchase failed', error);
     showToast(error.message || 'toast_order_save_failed', 'error');

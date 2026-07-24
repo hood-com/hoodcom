@@ -23,7 +23,7 @@ import {
   subscribeTopupSettings, subscribeTopupTransactions, updateTopupTransactionStatus
 } from '../services/balance-service.js';
 import { confirmOrder, getAllOrdersForAdmin, rejectOrder, subscribeOrdersForAdmin, updateOrderStatus } from '../services/order-service.js';
-import { decideRequest, listPendingForAdmin, requestNotificationPermission, systemNotify } from '../services/workflow-service.js';
+import { decideRequest, getPurchaseChannels, listPendingForAdmin, requestNotificationPermission, savePurchaseChannels, systemNotify } from '../services/workflow-service.js';
 import { migrateAllImages } from '../services/image-storage-service.js';
 import { escapeAttr, escapeHTML, sanitizeBoolean, sanitizeInput, sanitizeNumber } from '../utils/sanitizers.js';
 import { formatDate, formatPrice, formatStatus } from '../utils/formatters.js';
@@ -764,9 +764,10 @@ const installImageMigration=()=>{const header=document.querySelector('.admin-hea
 const installPendingCenter=()=>{
   const tabs=document.querySelector('.admin-tabs');if(!tabs||byId('tab-pending-workflow'))return;
   const button=document.createElement('button');button.type='button';button.className='admin-tab';button.dataset.tab='pending-workflow';button.innerHTML='🔔 الطلبات المعلّقة <b id="pendingWorkflowCount">0</b>';tabs.prepend(button);
-  const panel=document.createElement('div');panel.className='admin-section';panel.id='tab-pending-workflow';panel.innerHTML='<div class="admin-form"><div class="workflow-head"><h2>مركز الطلبات المعلّقة</h2><button type="button" class="btn btn-outline" id="enableAdminNotifications">تفعيل إشعارات الإدارة</button></div><div id="pendingWorkflowRows"></div></div>';
+  const panel=document.createElement('div');panel.className='admin-section';panel.id='tab-pending-workflow';panel.innerHTML='<div class="admin-form"><div class="workflow-head"><h2>مركز الطلبات المعلّقة</h2><div class="workflow-head-actions"><button type="button" class="btn btn-outline" id="managePurchaseChannels">إدارة قنوات إكمال الشراء</button><button type="button" class="btn btn-outline" id="enableAdminNotifications">تفعيل إشعارات الإدارة</button></div></div><div id="pendingWorkflowRows"></div></div>';
   tabs.parentNode.insertBefore(panel,tabs.nextSibling);
   byId('enableAdminNotifications')?.addEventListener('click',async()=>{const result=await requestNotificationPermission();showToast(result==='granted'?'تم تفعيل الإشعارات ✅':'تعذر تفعيل الإشعارات','info');});
+  byId('managePurchaseChannels')?.addEventListener('click',async()=>{try{const channels=await getPurchaseChannels(),raw=prompt('القنوات الحالية بصيغة JSON. عدّلها أو أضف قناة جديدة. الأنواع: whatsapp, sms, email, telegram, url',JSON.stringify(channels.length?channels:[{id:'whatsapp',name:'واتساب',type:'whatsapp',value:'967XXXXXXXXX',enabled:true,order:1}],null,2));if(raw===null)return;const parsed=JSON.parse(raw);await savePurchaseChannels(parsed);showToast('تم حفظ قنوات إكمال الشراء ✅','success');}catch(error){showToast(`بيانات القنوات غير صالحة: ${error.message}`,'error',{sticky:true});}});
   panel.addEventListener('click',async(event)=>{const control=event.target.closest('[data-workflow-decision]');if(!control)return;const decision=control.dataset.workflowDecision;const reason=decision==='reject'?(globalThis.prompt('سبب الرفض (اختياري)','')||''):'';try{control.disabled=true;await decideRequest(control.dataset.collection,control.dataset.id,decision,reason);showToast(decision==='approve'?'تم تجهيز العملية ✅':'تم رفض العملية','success');await renderPendingCenter();}catch(error){showToast(error.message,'error');}finally{control.disabled=false;}});
   void renderPendingCenter();workflowTimer=globalThis.setInterval(renderPendingCenter,4000);
 };

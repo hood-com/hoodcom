@@ -33,15 +33,19 @@ export const handler = async (event) => {
     if (balance < price) return json(400, { error: 'الرصيد غير كافٍ' });
     const now = new Date().toISOString();
     const orderId = id('order');
+    const tempToken = `HC1-${crypto.randomBytes(3).toString('hex').toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
     const order = {
       id: orderId, userId: user.id, userEmail: user.email || '', categoryId: category.id, categoryName: category.name,
       itemId: item.id, itemName: item.name, offerId: offer.id, offerName: offer.name || item.name,
       price, total: price, currency: offer.currency || 'YER', customerFields: cleanObject(body.customerFields || {}),
-      paymentMethod: 'account_balance', idempotencyKey, status: 'pending', createdAt: now, updatedAt: now
+      paymentMethod: 'account_balance', idempotencyKey, tempToken, tempTokenStatus: 'active', contactChannel: '', status: 'pending', createdAt: now, updatedAt: now
     };
+    const profile=await normalized.get('users',user.id);
+    const privateOrder={orderId,tempToken,userId:user.id,accountSecretToken:profile?.secretToken||'',productSecretToken:offer.secretToken||offer.offerPassword||'',categoryId:category.id,itemId:item.id,offerId:offer.id,createdAt:now,status:'active'};
     await db.upsert('user_balances', user.id, { ...(balanceRecord || {}), userId: user.id, balance: balance - price, updatedAt: now });
-    try { await db.upsert('orders', orderId, order); }
+    try { await db.upsert('orders', orderId, order); await db.upsert('order_private',orderId,privateOrder); await db.upsert('activity',`order-${orderId}`,{type:'order_created',orderId,userId:user.id,tempToken,createdAt:now}); }
     catch (error) {
+      await Promise.all([db.remove('orders',orderId).catch(()=>{}),db.remove('order_private',orderId).catch(()=>{})]);
       await db.upsert('user_balances', user.id, { ...(balanceRecord || {}), userId: user.id, balance, updatedAt: new Date().toISOString() });
       throw error;
     }

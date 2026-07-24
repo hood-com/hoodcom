@@ -20,6 +20,14 @@ export const handler=async(event)=>{
   if(event.httpMethod!=='POST')return json(405,{error:'Method not allowed'});
   try{
     const body=JSON.parse(event.body||'{}'),action=String(body.action||'');
+    if(action==='send-otp'){
+      const email=String(body.email||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/u.test(email))return json(400,{error:'البريد الإلكتروني غير صالح'});
+      const id=key('otp',email),current=await normalized.get('otp_cooldowns',id),now=Date.now(),nextAllowed=Number(current?.nextAllowed||0);
+      if(nextAllowed>now)return json(429,{error:'انتظر قبل إعادة إرسال الرمز',retryAfter:Math.ceil((nextAllowed-now)/1000)});
+      const service=process.env.SUPABASE_SERVICE_ROLE_KEY,url=process.env.SUPABASE_URL,response=await fetch(`${url}/auth/v1/otp`,{method:'POST',headers:{apikey:service,'content-type':'application/json'},body:JSON.stringify({email,create_user:true})});
+      if(!response.ok)return json(response.status,{error:'تعذر إرسال الرمز',details:(await response.text()).slice(0,160)});
+      await db.upsert('otp_cooldowns',id,{emailHash:hash(email),nextAllowed:now+120000,updatedAt:new Date().toISOString()});return json(200,{ok:true,retryAfter:120});
+    }
     if(action==='login'){
       const identifier=String(body.identifier||'').trim(),password=String(body.password||'');
       if(!identifier||!password)return json(400,{error:'بيانات الدخول مطلوبة'});

@@ -4,6 +4,7 @@ const pendingCollections = ['orders','topup_transactions'];
 const cleanReason = (value) => String(value || '').trim().replace(/[<>]/gu, '').slice(0, 500);
 const pendingStatus = (value) => ['pending','processing','under_confirmation'].includes(String(value || 'pending'));
 const adminStatus = (action) => action === 'approve' ? 'completed' : 'rejected';
+const normalizeChannel=(channel,index)=>({id:String(channel?.id||`channel-${index}`),name:String(channel?.name||'تواصل').slice(0,80),type:['whatsapp','sms','email','telegram','url'].includes(channel?.type)?channel.type:'url',value:String(channel?.value||'').trim().slice(0,500),enabled:channel?.enabled!==false,order:Number(channel?.order||index)});
 
 const userToken = async (event) => verifyUserJWT(event);
 const adminToken = async (event) => verifyAdminJWT(event);
@@ -15,9 +16,12 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405,{error:'Method not allowed'});
   try {
     const body=JSON.parse(event.body||'{}'), action=String(body.action||'');
+    if(action==='public-channels'){const settings=await normalized.get('settings','purchase_channels');return json(200,{ok:true,channels:(settings?.channels||[]).map(normalizeChannel).filter((c)=>c.enabled).sort((a,b)=>a.order-b.order)});}
+    if(action==='admin-save-channels'){if(!await adminToken(event))return json(403,{error:'صلاحية المدير مطلوبة'});const channels=(body.channels||[]).slice(0,30).map(normalizeChannel);await db.upsert('settings','purchase_channels',{channels,updatedAt:new Date().toISOString()});return json(200,{ok:true,channels});}
+    if(action==='select-channel'){const user=await userToken(event);if(!user)return json(401,{error:'يجب تسجيل الدخول'});const order=await normalized.get('orders',String(body.orderId||''));if(!order||String(order.userId)!==String(user.id))return json(404,{error:'الطلب غير موجود'});if(order.status!=='pending')return json(409,{error:'تمت معالجة الطلب'});const settings=await normalized.get('settings','purchase_channels'),channel=(settings?.channels||[]).map(normalizeChannel).find((c)=>c.id===String(body.channelId)&&c.enabled);if(!channel)return json(400,{error:'قناة غير متاحة'});const{id,...data}=order;await db.upsert('orders',id,{...data,contactChannel:channel.id,contactChannelName:channel.name,contactOpenedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});await db.upsert('activity',`channel-${Date.now()}-${id}`,{type:'contact_channel_selected',orderId:id,userId:user.id,channelId:channel.id,createdAt:new Date().toISOString()});return json(200,{ok:true,channel,tempToken:order.tempToken,orderId:id});}
     if(action==='admin-list'){
       if(!await adminToken(event))return json(403,{error:'صلاحية المدير مطلوبة'});
-      const all=await listAll();return json(200,{ok:true,pending:all.filter((entry)=>pendingStatus(entry.status)),all});
+      const all=await listAll(),privateOrders=await normalized.list('order_private'),privateMap=new Map(privateOrders.map((entry)=>[entry.id,entry]));const enriched=all.map((entry)=>entry.workflowCollection==='orders'?{...entry,managerSecrets:privateMap.get(entry.id)||null}:entry);return json(200,{ok:true,pending:enriched.filter((entry)=>pendingStatus(entry.status)),all:enriched});
     }
     if(action==='admin-decide'){
       const admin=await adminToken(event);if(!admin)return json(403,{error:'صلاحية المدير مطلوبة'});
@@ -34,6 +38,7 @@ export const handler = async (event) => {
       }
       const saved={...current,status,rejectionReason:body.decision==='reject'?reason:'',processedAt:now,processedBy:admin.id,updatedAt:now};delete saved.id;
       await db.upsert(collection,id,saved);
+      if(collection==='orders'){const privateOrder=await normalized.get('order_private',id);if(privateOrder){const{ id:ignored,...privateData}=privateOrder;await db.upsert('order_private',id,{...privateData,status:body.decision==='approve'?'used':'cancelled',closedAt:now});}}
       await db.upsert('activity',`decision-${Date.now()}-${id}`,{type:'admin_decision',action:body.decision,collection,requestId:id,userId:current.userId||'',adminId:admin.id,reason,createdAt:now});
       return json(200,{ok:true,result:{id,...saved}});
     }
