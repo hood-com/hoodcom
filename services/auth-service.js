@@ -404,7 +404,8 @@ export const deleteUserAccount = async (userId, email = '') => {
 };
 
 export const loginAdmin = async (email, password) => {
-  const credential = await guardedSignIn(String(email || '').trim().toLowerCase(), String(password || ''));
+  // Administrators authenticate directly with Supabase Auth. Customer phone lockout is intentionally separate.
+  const credential = await signInWithEmailAndPassword(String(email || '').trim().toLowerCase(), String(password || ''));
   const rawRole = credential.rawUser?.app_metadata?.role;
   if (rawRole !== 'admin') {
     await (await getAuth()).signOut().catch(() => {});
