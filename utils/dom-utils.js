@@ -165,40 +165,18 @@ export const readFileAsDataURL = (file) => new Promise((resolve, reject) => {
 });
 
 export const compressImageFile = async (file, options = {}) => {
-  const {
-    maxWidth = 1280,
-    maxHeight = 1280,
-    quality = 0.82,
-    outputType = 'image/webp',
-    maxBytes = 10 * 1024 * 1024
-  } = options;
-  if (!file) return '';
-  if (!String(file.type || '').startsWith('image/')) throw new Error('الملف المحدد ليس صورة');
-  if (file.size > maxBytes) throw new Error('حجم الصورة أكبر من الحد المسموح');
-
-  const original = await readFileAsDataURL(file);
-  if (/image\/(?:svg\+xml|gif)/iu.test(file.type)) return original;
-  const root = globalThis.document;
-  if (!root?.createElement) return original;
-
-  const image = await new Promise((resolve, reject) => {
-    const element = new Image();
-    element.onload = () => resolve(element);
-    element.onerror = () => reject(new Error('تعذر قراءة الصورة'));
-    element.src = original;
-  });
-  const ratio = Math.min(1, maxWidth / image.naturalWidth, maxHeight / image.naturalHeight);
-  const width = Math.max(1, Math.round(image.naturalWidth * ratio));
-  const height = Math.max(1, Math.round(image.naturalHeight * ratio));
-  const canvas = root.createElement('canvas');
-  canvas.width = width; canvas.height = height;
-  const context = canvas.getContext('2d', { alpha: outputType === 'image/png' });
-  if (!context) return original;
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = 'high';
-  context.drawImage(image, 0, 0, width, height);
-  const compressed = canvas.toDataURL(outputType, Math.min(1, Math.max(0.35, Number(quality) || 0.82)));
-  return compressed.length < original.length || ratio < 1 ? compressed : original;
+  const { maxWidth=1280,maxHeight=1280,quality=.82,outputType='image/webp',maxBytes=10*1024*1024 }=options;
+  if(!file)return'';if(!String(file.type||'').startsWith('image/'))throw new Error('الملف المحدد ليس صورة');if(file.size>maxBytes)throw new Error('حجم الصورة أكبر من الحد المسموح');
+  let original='',objectURL='';
+  try{original=await readFileAsDataURL(file);}catch(error){try{objectURL=URL.createObjectURL(file);}catch{throw new Error('تعذر الوصول إلى الصورة. اخترها من تطبيق المعرض مباشرة.');}}
+  if(original&&/image\/(?:svg\+xml|gif)/iu.test(file.type))return original;
+  const source=original||objectURL,root=globalThis.document;if(!root?.createElement)return original;
+  try{
+    const image=await new Promise((resolve,reject)=>{const element=new Image();element.onload=()=>resolve(element);element.onerror=()=>reject(new Error('تعذر قراءة الصورة. جرّب اختيارها من المعرض.'));element.src=source;});
+    const ratio=Math.min(1,maxWidth/image.naturalWidth,maxHeight/image.naturalHeight),width=Math.max(1,Math.round(image.naturalWidth*ratio)),height=Math.max(1,Math.round(image.naturalHeight*ratio));
+    const canvas=root.createElement('canvas');canvas.width=width;canvas.height=height;const context=canvas.getContext('2d',{alpha:outputType==='image/png'});if(!context)throw new Error('تعذر تجهيز الصورة');context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';context.drawImage(image,0,0,width,height);
+    const compressed=canvas.toDataURL(outputType,Math.min(1,Math.max(.35,Number(quality)||.82)));return !original||compressed.length<original.length||ratio<1?compressed:original;
+  }finally{if(objectURL)URL.revokeObjectURL(objectURL);}
 };
 
 export const bindImagePreview = (input, preview, options = {}) => {
