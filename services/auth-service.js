@@ -257,6 +257,13 @@ export const register = async (userData) => {
     return sessionUser;
   } catch (error) {
     console.error('[auth-service] register failed', error);
+    try {
+      const auth = await getAuth();
+      const { data } = await auth.getUser();
+      const profile = data.user ? await (await getDB()).getDocument('users', data.user.id).catch(() => null) : null;
+      if (data.user && !profile) await auth.signOut();
+    } catch {}
+    clearPersistedUser();
     throw error;
   }
 };
@@ -302,6 +309,14 @@ export const getCurrentUser = async () => {
     const authUser = normalizeAuthUser(data.user);
     let profile = null;
     try { profile = await (await getDB()).getDocument('users', data.user.id); } catch (profileError) { console.warn('[auth-service] profile load delayed', profileError); }
+    const isAdmin = data.user.app_metadata?.role === 'admin';
+    if (!isAdmin && !profile) {
+      // OTP verification creates an Auth session before the customer profile is committed.
+      // Never treat an incomplete signup as a logged-in customer.
+      await auth.signOut().catch(() => {});
+      clearPersistedUser();
+      return null;
+    }
     return stripManagerOnlyFields({ ...(profile || {}), ...authUser, uid: data.user.id, id: data.user.id, email: data.user.email || '', sessionVersion: SESSION_VERSION });
   } catch (error) {
     console.warn('[auth-service] current user rejected', error);
