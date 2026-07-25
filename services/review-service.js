@@ -39,7 +39,7 @@ export const canUserReview = async (userOverride = null) => {
     if (!user) {
       return { allowed: false, reason: 'login_required', message: '🔒 سجل دخولك لتشاركنا رأيك' };
     }
-    // Email must be verified - phone verification NOT required
+    if(!['verified','active'].includes(user.accountStatus))return{allowed:false,reason:'phone_not_verified',message:'يجب توثيق رقم الهاتف لإضافة تعليق'};
     const emailVerified = user.emailVerified === true || user.email_verified === true || user.verified === true;
     if (!emailVerified) {
       return { allowed: false, reason: 'email_not_verified', message: '📧 يجب توثيق بريدك الإلكتروني لإضافة تعليق' };

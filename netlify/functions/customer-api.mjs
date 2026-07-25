@@ -22,6 +22,8 @@ export const handler = async (event) => {
     if(!idempotencyKey)return json(400,{error:'معرف العملية مطلوب'});
     const existing=(await normalized.list('orders')).find((entry)=>entry.userId===user.id&&entry.idempotencyKey===idempotencyKey);
     if(existing)return json(200,{ok:true,result:existing,duplicate:true});
+    const customerProfile=await normalized.get('users',user.id);
+    if(!customerProfile||!['verified','active'].includes(customerProfile.accountStatus))return json(403,{error:'يجب توثيق رقم الهاتف أولًا لإتمام الشراء'});
     const category = await normalized.get('categories', String(body.categoryId || ''));
     const item = category?.items?.find((entry) => String(entry.id) === String(body.itemId));
     const offer = item?.offers?.find((entry) => String(entry.id) === String(body.offerId)) || item?.offers?.[0];

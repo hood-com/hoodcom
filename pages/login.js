@@ -5,6 +5,8 @@ import { LOCATION_DATA, COUNTRY_DIAL_CODES } from '../config/locations.js';
 import { isValidEmailAddress, isValidName, isValidPassword, isValidPhone, validateRequired } from '../utils/validators.js';
 import { escapeHTML } from '../utils/sanitizers.js';
 import { showToast } from '../utils/dom-utils.js';
+import { createPhoneVerification } from '../services/phone-verification-service.js';
+import { getPurchaseChannels } from '../services/workflow-service.js';
 
 const value = (id) => document.getElementById(id)?.value?.trim() || '';
 const element = (id) => document.getElementById(id);
@@ -65,6 +67,9 @@ const buildRegistrationData = (extra = {}) => ({
   country: value('regCountry'), countryCode: selectedDialCode(), city: value('regCity'),
   district: value('regDistrict'), address: value('regAddress'), ...extra
 });
+
+const verificationHref=(channel,message)=>{const value=String(channel.value||''),encoded=encodeURIComponent(message),digits=value.replace(/\D/gu,'');if(channel.type==='whatsapp')return`https://wa.me/${digits}?text=${encoded}`;if(channel.type==='sms')return`sms:${digits}?body=${encoded}`;if(channel.type==='email')return`mailto:${value}?subject=${encodeURIComponent('توثيق حساب هود كوم')}&body=${encoded}`;if(channel.type==='telegram')return value.startsWith('http')?value:`https://t.me/${value.replace(/^@/u,'')}`;return value;};
+const showPhoneVerification=async()=>{const result=await createPhoneVerification(),request=result.request;if(!request)return;const channels=await getPurchaseChannels('verification').catch(()=>[]),overlay=document.createElement('div');overlay.className='purchase-channel-overlay';overlay.innerHTML=`<section class="purchase-channel-modal"><h2>توثيق رقم الهاتف</h2><p>أرسل الرمز من نفس رقم الهاتف المسجل إلى الإدارة.</p><div class="phone-verification-code">${escapeHTML(request.code)}</div><div class="purchase-channel-list">${channels.map((channel)=>`<a class="purchase-channel-option" href="${escapeHTML(verificationHref(channel,`طلب توثيق هود كوم: ${request.code}`))}"><strong>${escapeHTML(channel.name)}</strong><small>${escapeHTML(channel.type)}</small></a>`).join('')}</div><button class="btn btn-outline" type="button" data-close-verification>الانتقال إلى حسابي</button></section>`;document.body.append(overlay);overlay.querySelector('[data-close-verification]')?.addEventListener('click',()=>{location.href='account.html';});};
 
 const showConfirmation = () => {
   const country = LOCATION_DATA[value('regCountry')]; const city = country?.cities?.[value('regCity')];
@@ -153,7 +158,7 @@ const bindRegistration = () => {
       const user = await register(buildRegistrationData({ verifiedUserId }));
       void import('../services/workflow-service.js').then((mod)=>mod.logActivity('registration',{country:user.country||'',city:user.city||''}));
       authStore.setState({ user, isAuthenticated: true, isLoading: false, accountStatus: user.accountStatus });
-      showToast('toast_register_success'); setTimeout(() => { globalThis.location.href = 'reports.html'; }, 700);
+      showToast('toast_register_success'); await showPhoneVerification();
     } catch (error) { console.error('[registration] failed', error); showToast(error?.message || 'تعذر إنشاء الحساب', 'error', { sticky: true }); setButtonLoading(button, false); }
   });
 };

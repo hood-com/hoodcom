@@ -7,7 +7,7 @@ const call = async (body) => {
   const payload=await response.json().catch(()=>({}));if(!response.ok||!payload.ok)throw new Error(payload.error||'تعذر تنفيذ العملية');return payload;
 };
 export const listPendingForAdmin=()=>call({action:'admin-list'});
-export const getPurchaseChannels=async()=>{const response=await fetch('/.netlify/functions/workflow-api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'public-channels'})});const payload=await response.json().catch(()=>({}));if(!response.ok||!payload.ok)throw new Error(payload.error||'تعذر تحميل قنوات التواصل');return payload.channels||[];};
+export const getPurchaseChannels=async(purpose='purchase')=>{const response=await fetch('/.netlify/functions/workflow-api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'public-channels',purpose})});const payload=await response.json().catch(()=>({}));if(!response.ok||!payload.ok)throw new Error(payload.error||'تعذر تحميل قنوات التواصل');return payload.channels||[];};
 export const selectPurchaseChannel=(orderId,channelId)=>call({action:'select-channel',orderId,channelId});
 export const savePurchaseChannels=(channels)=>call({action:'admin-save-channels',channels});
 export const decideRequest=(collection,id,decision,reason='')=>call({action:'admin-decide',collection,id,decision,reason});

@@ -4,7 +4,7 @@ const pendingCollections = ['orders','topup_transactions'];
 const cleanReason = (value) => String(value || '').trim().replace(/[<>]/gu, '').slice(0, 500);
 const pendingStatus = (value) => ['pending','processing','under_confirmation'].includes(String(value || 'pending'));
 const adminStatus = (action) => action === 'approve' ? 'completed' : 'rejected';
-const normalizeChannel=(channel,index)=>({id:String(channel?.id||`channel-${index}`),name:String(channel?.name||'تواصل').slice(0,80),type:['whatsapp','sms','email','telegram','url'].includes(channel?.type)?channel.type:'url',value:String(channel?.value||'').trim().slice(0,500),enabled:channel?.enabled!==false,order:Number(channel?.order||index)});
+const normalizeChannel=(channel,index)=>({id:String(channel?.id||`channel-${index}`),name:String(channel?.name||'تواصل').slice(0,80),type:['whatsapp','sms','email','telegram','url'].includes(channel?.type)?channel.type:'url',value:String(channel?.value||'').trim().slice(0,500),enabled:channel?.enabled!==false,forPurchase:channel?.forPurchase!==false,forVerification:channel?.forVerification!==false,order:Number(channel?.order||index)});
 
 const userToken = async (event) => verifyUserJWT(event);
 const adminToken = async (event) => verifyAdminJWT(event);
@@ -16,7 +16,7 @@ export const handler = async (event) => {
   if (event.httpMethod !== 'POST') return json(405,{error:'Method not allowed'});
   try {
     const body=JSON.parse(event.body||'{}'), action=String(body.action||'');
-    if(action==='public-channels'){const settings=await normalized.get('settings','purchase_channels');return json(200,{ok:true,channels:(settings?.channels||[]).map(normalizeChannel).filter((c)=>c.enabled).sort((a,b)=>a.order-b.order)});}
+    if(action==='public-channels'){const settings=await normalized.get('settings','purchase_channels');return json(200,{ok:true,channels:(settings?.channels||[]).map(normalizeChannel).filter((c)=>c.enabled&&(!body.purpose||(body.purpose==='verification'?c.forVerification:c.forPurchase))).sort((a,b)=>a.order-b.order)});}
     if(action==='admin-save-channels'){if(!await adminToken(event))return json(403,{error:'صلاحية المدير مطلوبة'});const channels=(body.channels||[]).slice(0,30).map(normalizeChannel);await db.upsert('settings','purchase_channels',{channels,updatedAt:new Date().toISOString()});return json(200,{ok:true,channels});}
     if(action==='select-channel'){const user=await userToken(event);if(!user)return json(401,{error:'يجب تسجيل الدخول'});const order=await normalized.get('orders',String(body.orderId||''));if(!order||String(order.userId)!==String(user.id))return json(404,{error:'الطلب غير موجود'});if(order.status!=='pending')return json(409,{error:'تمت معالجة الطلب'});const settings=await normalized.get('settings','purchase_channels'),channel=(settings?.channels||[]).map(normalizeChannel).find((c)=>c.id===String(body.channelId)&&c.enabled);if(!channel)return json(400,{error:'قناة غير متاحة'});const{id,...data}=order;await db.upsert('orders',id,{...data,contactChannel:channel.id,contactChannelName:channel.name,contactOpenedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});await db.upsert('activity',`channel-${Date.now()}-${id}`,{type:'contact_channel_selected',orderId:id,userId:user.id,channelId:channel.id,createdAt:new Date().toISOString()});return json(200,{ok:true,channel,tempToken:order.tempToken,orderId:id});}
     if(action==='admin-list'){
