@@ -5,6 +5,7 @@ import { LOCATION_DATA, COUNTRY_DIAL_CODES } from '../config/locations.js';
 import { isValidEmailAddress, isValidName, isValidPassword, isValidPhone, validateRequired } from '../utils/validators.js';
 import { escapeHTML } from '../utils/sanitizers.js';
 import { showToast } from '../utils/dom-utils.js';
+import { getClient } from '../services/supabase-client.js';
 import { createPhoneVerification } from '../services/phone-verification-service.js';
 import { getPurchaseChannels } from '../services/workflow-service.js';
 
@@ -163,6 +164,8 @@ const bindRegistration = () => {
   });
 };
 
+const updatePasswordStrength=()=>{const password=element('regPassword')?.value||'',box=element('passwordStrength'),bar=box?.querySelector('span'),label=box?.querySelector('small');if(!box||!bar||!label)return;const checks=[password.length>=8,/\p{L}/u.test(password),/\d/u.test(password)],score=checks.filter(Boolean).length;bar.style.width=`${score/3*100}%`;box.dataset.level=String(score);label.textContent=score===3?'كلمة المرور مقبولة ✓':score===2?'أضف رقمًا أو حرفًا لإكمالها':password.length?'كلمة المرور غير مكتملة':'اكتب 8 أحرف على الأقل مع حرف ورقم';};
+
 const bindGoogle = () => {
   element('googleContinueBtn')?.addEventListener('click', async () => {
     if (!validateFirstStep()) { setStep(1); showToast('toast_google_registration_data_required', 'error'); return; }
@@ -175,13 +178,23 @@ const bindGoogle = () => {
 
 const finishGoogleRegistration = async () => {
   try {
-    const pendingRaw = globalThis.sessionStorage?.getItem('hud_google_pending_reg'); if (!pendingRaw) return;
-    const pending = JSON.parse(pendingRaw); if (Date.now() - pending.timestamp > 600000) { globalThis.sessionStorage.removeItem('hud_google_pending_reg'); return; }
-    const oauthUser = await getCurrentUser(); if (!oauthUser?.uid) return;
-    const user = await register({ ...pending, email: oauthUser.email || pending.email, name: oauthUser.displayName || pending.name, verifiedUserId: oauthUser.uid });
-    authStore.setState({ user, isAuthenticated: true, accountStatus: user.accountStatus });
-    globalThis.sessionStorage.removeItem('hud_google_pending_reg'); globalThis.location.href = 'reports.html';
-  } catch (error) { console.error('[login-page] Google return failed', error); showToast('toast_google_complete_failed', 'error'); }
+    const pendingRaw=globalThis.sessionStorage?.getItem('hud_google_pending_reg');if(!pendingRaw)return;
+    const pending=JSON.parse(pendingRaw);if(Date.now()-pending.timestamp>600000){sessionStorage.removeItem('hud_google_pending_reg');return;}
+    const client=await getClient(),{data,error}=await client.auth.getUser();if(error||!data.user?.email)return;
+    const selectedEmail=data.user.email.toLowerCase();await client.auth.signOut();
+    switchMode('register');populateCountries();
+    if(element('regName'))element('regName').value=pending.name||'';
+    if(element('regPhone'))element('regPhone').value=pending.phone||'';
+    if(element('regCountry')){element('regCountry').value=pending.country||'';populateCities(pending.country);}
+    if(element('regCity')){element('regCity').value=pending.city||'';populateDistricts(pending.country,pending.city);}
+    if(element('regDistrict'))element('regDistrict').value=pending.district||'';
+    if(element('regAddress'))element('regAddress').value=pending.address||'';
+    if(element('regEmail'))element('regEmail').value=selectedEmail;
+    if(element('regPassword'))element('regPassword').value=pending.password||'';
+    showConfirmation();setStep(2);sessionStorage.removeItem('hud_google_pending_reg');
+    showToast('تم اختيار البريد من Google. أرسل رمز التأكيد لإكمال التسجيل','success',{sticky:true});
+    element('regEmail')?.scrollIntoView({behavior:'smooth',block:'center'});
+  }catch(error){console.error('[login-page] Google return failed',error);showToast(error?.message||'تعذر إكمال اختيار بريد Google','error',{sticky:true});}
 };
 
 export const initLoginPage = async () => {
@@ -190,6 +203,7 @@ export const initLoginPage = async () => {
   bindLogin();
   bindRegistration();
   bindGoogle();
+  element('regPassword')?.addEventListener('input',updatePasswordStrength);updatePasswordStrength();
 
   element('regCountry')?.addEventListener('change', (event) => {
     populateCities(event.target.value);
