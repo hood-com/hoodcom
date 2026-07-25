@@ -154,7 +154,7 @@ const bindRegistration = () => {
       void import('../services/workflow-service.js').then((mod)=>mod.logActivity('registration',{country:user.country||'',city:user.city||''}));
       authStore.setState({ user, isAuthenticated: true, isLoading: false, accountStatus: user.accountStatus });
       showToast('toast_register_success'); setTimeout(() => { globalThis.location.href = 'reports.html'; }, 700);
-    } catch (error) { showToast('toast_error_register', 'error', { sticky: true }); setButtonLoading(button, false); }
+    } catch (error) { console.error('[registration] failed', error); showToast(error?.message || 'تعذر إنشاء الحساب', 'error', { sticky: true }); setButtonLoading(button, false); }
   });
 };
 

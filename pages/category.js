@@ -15,15 +15,15 @@ let categories = [];
 let currentPurchase = null;
 
 const closeItemModal = () => {
-  document.getElementById('itemModal')?.classList.remove('show'); document.getElementById('itemModalOverlay')?.classList.remove('show');
+  document.getElementById('itemModal')?.classList.remove('show', 'open'); document.getElementById('itemModalOverlay')?.classList.remove('show', 'open');
   document.getElementById('itemModal')?.setAttribute('aria-hidden', 'true'); document.getElementById('itemModalOverlay')?.setAttribute('aria-hidden', 'true');
 };
 const closeCustomerModal = () => {
-  document.getElementById('customerModal')?.classList.remove('show'); document.getElementById('customerOverlay')?.classList.remove('show');
+  document.getElementById('customerModal')?.classList.remove('show', 'open'); document.getElementById('customerOverlay')?.classList.remove('show', 'open');
   document.getElementById('customerModal')?.setAttribute('aria-hidden', 'true'); document.getElementById('customerOverlay')?.setAttribute('aria-hidden', 'true');
 };
 const openLayer = (id, overlayId) => {
-  document.getElementById(id)?.classList.add('show'); document.getElementById(overlayId)?.classList.add('show');
+  document.getElementById(id)?.classList.add('show', 'open'); document.getElementById(overlayId)?.classList.add('show', 'open');
   document.getElementById(id)?.setAttribute('aria-hidden', 'false'); document.getElementById(overlayId)?.setAttribute('aria-hidden', 'false');
 };
 
