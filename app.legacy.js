@@ -1297,7 +1297,7 @@ function generateUniqueSecretToken(prefix) {
 }
 window.generateUniqueSecretToken = generateUniqueSecretToken;
 
-// ===== تسجيل الطلب وإرسال كلمات المرور السرية إلى واتساب =====
+// ===== مسار قديم معطل: لا تُرسل أسرار إدارية إلى أي منصة =====
 async function submitOrderOnSite(e) {
   e.preventDefault();
   const authenticatedUser = requireLoggedInForPurchase();
@@ -1459,7 +1459,7 @@ async function submitOrderOnSite(e) {
 
     const defaultWa = (window.siteSettings && window.siteSettings.whatsappNumber) || (typeof WHATSAPP_NUMBER !== 'undefined' ? WHATSAPP_NUMBER : '967783708724');
     const waClean = String(defaultWa).replace(/\D/g, '');
-    const waText = `كلمة مرور الحساب: ${accountPassword}\nكلمة مرور العرض: ${offerPassword}`;
+    const waText = `طلب هود كوم: ${window.currentTemporaryOrderToken || 'ORDER'}`;
     const waUrl = `https://wa.me/${waClean}?text=${encodeURIComponent(waText)}`;
 
     showToast('toast_order_whatsapp_redirect', 'info');

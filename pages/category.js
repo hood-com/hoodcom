@@ -63,6 +63,13 @@ const startPurchase = (productId, offerId) => {
     return;
   }
   currentPurchase = { category: found.category, item: found.item, offer };
+  const purchaseSettings=getSiteSettings(),modal=document.getElementById('customerModal');
+  const title=document.getElementById('customerModalTitle');if(title)title.textContent=purchaseSettings.purchasePageTitle||'تأكيد الطلب';
+  let description=document.getElementById('purchasePageDescription');if(!description&&title){description=document.createElement('p');description.id='purchasePageDescription';title.after(description);}if(description)description.textContent=purchaseSettings.purchasePageDescription||'راجع تفاصيل طلبك ثم أكد العملية.';
+  const submitLabel=document.querySelector('#customerForm [type="submit"] span:last-child');if(submitLabel)submitLabel.textContent=purchaseSettings.purchaseConfirmText||'تأكيد الطلب';
+  const balanceCard=modal?.querySelector('.payment-from-balance-card');if(balanceCard)balanceCard.style.display=purchaseSettings.purchaseShowBalance===false?'none':'';
+  const orderSummary=modal?.querySelector('.order-summary');if(orderSummary)orderSummary.style.display=purchaseSettings.purchaseShowPrice===false?'none':'';
+  const orderDetails=document.getElementById('orderDetailsCard');if(orderDetails)orderDetails.style.display=purchaseSettings.purchaseShowDetails===false?'none':'';
   const fields = getProductFields(found.item); const container = document.getElementById('dynamicFieldsContainer');
   if (container) container.innerHTML = fields.map((field) => `<div class="form-group"><label class="form-label" for="field-${escapeHTML(field.id)}">${escapeHTML(field.label)}${field.required ? ' *' : ''}</label>${field.type === 'note' ? `<textarea class="form-input" id="field-${escapeHTML(field.id)}" data-order-field="${escapeHTML(field.id)}" placeholder="${escapeHTML(field.placeholder || '')}" ${field.required ? 'required' : ''}></textarea>` : `<input class="form-input" id="field-${escapeHTML(field.id)}" data-order-field="${escapeHTML(field.id)}" type="${escapeHTML(['email', 'password', 'number', 'url'].includes(field.type) ? field.type : 'text')}" placeholder="${escapeHTML(field.placeholder || '')}" ${field.required ? 'required' : ''}>`}</div>`).join('');
   const details = document.getElementById('orderDetailsCard'); if (details) details.innerHTML = `<strong>${escapeHTML(found.item.name)}</strong><span>${escapeHTML(offer.name || '')}</span><b>${formatPrice(Number(offer.price || 0), offer.currency || 'YER')}</b>`;
@@ -94,23 +101,16 @@ const submitPurchase = async (event) => {
   } finally { if (button) button.disabled = false; }
 };
 
-const renderPage = (categoryId) => {
-  const target = document.getElementById('pageContent'); if (!target) return;
-  const category = categories.find((entry) => entry.id === categoryId);
-  if (!category) {
-    target.innerHTML = `<section class="section"><div class="section-header"><h1 class="section-title">الأقسام</h1></div><div class="categories-grid">${categories.map((entry) => CategoryCard({ category: entry })).join('')}</div></section>`;
-  } else {
-    setCurrentCategory(category);
-    target.innerHTML = `<section class="section"><div class="section-header"><a href="category.html" class="btn btn-outline">كل الأقسام</a><h1 class="section-title">${escapeHTML(category.name)}</h1><p>${escapeHTML(category.description || category.desc || '')}</p></div><div class="items-grid">${(category.items || []).map((item) => ProductCard({ product: item, categoryId: category.id })).join('')}</div></section>`;
-  }
-  const menu = document.getElementById('menuCategories'); if (menu) menu.innerHTML = categories.map((entry) => `<a class="menu-link" href="category.html?id=${encodeURIComponent(entry.id)}">${escapeHTML(entry.name)}</a>`).join('');
-  injectIcons();
-  requestAnimationFrame(() => hydrateCatalogImages(target));
+const renderPage = (categoryId, itemId = '') => {
+  const target=document.getElementById('pageContent');if(!target)return;const category=categories.find((entry)=>entry.id===categoryId);
+  if(!category){target.innerHTML=`<section class="section"><div class="section-header"><h1 class="section-title">الأقسام</h1></div><div class="categories-grid">${categories.map((entry)=>CategoryCard({category:entry})).join('')}</div></section>`;}
+  else if(itemId){const item=(category.items||[]).find((entry)=>String(entry.id)===String(itemId));if(!item){target.innerHTML='<div class="empty-state">المنتج غير موجود</div>';}else{setCurrentCategory(category);setCurrentItem(item);const offers=(item.offers||[]).filter((offer)=>offer.status!=='unavailable');target.innerHTML=`<section class="section offers-full-page"><div class="section-header"><a href="category.html?id=${encodeURIComponent(category.id)}" class="btn btn-outline">العودة للمنتجات</a><h1 class="section-title">${escapeHTML(item.name)}</h1><p>${escapeHTML(item.description||item.desc||'')}</p></div><div class="offers-full-grid">${offers.map((offer)=>{const image=safeURL(offer.image||item.image,'content-placeholder.svg');return`<article class="offer-card catalog-choice-card" role="button" tabindex="0" data-action="buy-offer" data-product-id="${escapeHTML(item.id)}" data-offer-id="${escapeHTML(offer.id||'')}"><div class="offer-image-wrap"><img src="content-placeholder.svg" data-catalog-src="${escapeHTML(image)}" alt="${escapeHTML(offer.name||item.name)}" loading="lazy" decoding="async"></div><div class="offer-info"><strong>${escapeHTML(offer.name||item.name)}</strong><p>${escapeHTML(offer.description||offer.desc||'')}</p></div></article>`;}).join('')||'<div class="empty-state">لا توجد عروض متاحة</div>'}</div></section>`;}}
+  else{setCurrentCategory(category);target.innerHTML=`<section class="section"><div class="section-header"><a href="category.html" class="btn btn-outline">كل الأقسام</a><h1 class="section-title">${escapeHTML(category.name)}</h1><p>${escapeHTML(category.description||category.desc||'')}</p></div><div class="items-grid">${(category.items||[]).map((item)=>ProductCard({product:item,categoryId:category.id})).join('')}</div></section>`;}
+  const menu=document.getElementById('menuCategories');if(menu)menu.innerHTML=categories.map((entry)=>`<a class="menu-link" href="category.html?id=${encodeURIComponent(entry.id)}">${escapeHTML(entry.name)}</a>`).join('');injectIcons();requestAnimationFrame(()=>hydrateCatalogImages(target));
 };
 
 const bindEvents = () => {
   document.addEventListener('click', (event) => {
-    const productButton = event.target.closest('[data-action="select-product"]'); if (productButton) { event.preventDefault(); openProduct(productButton.dataset.productId); }
     const offerButton = event.target.closest('[data-action="buy-offer"]'); if (offerButton) startPurchase(offerButton.dataset.productId, offerButton.dataset.offerId);
   });
   document.addEventListener('keydown', (event) => {
@@ -129,12 +129,11 @@ export const initCategoryPage = async () => {
   categories = await loadCategories(false);
   const params = new URLSearchParams(globalThis.location.search);
   const categoryId = params.get('id');
-  renderPage(categoryId); bindEvents();
-  if (params.get('item')) openProduct(params.get('item'));
+  const itemId=params.get('item')||'';renderPage(categoryId,itemId);bindEvents();
   // Customer catalog is snapshot-based. New admin changes appear only after the fixed refresh button.
   globalThis.addEventListener('hud:categories-updated', async (event) => {
     if (!event.detail?.categories) return;
-    categories = event.detail.categories; renderPage(categoryId);
+    categories = event.detail.categories; renderPage(categoryId,itemId);
   });
 };
 
