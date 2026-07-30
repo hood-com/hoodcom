@@ -62,6 +62,8 @@ const normalizeOffer = (offer = {}, index = 0) => ({
   // Legacy offerPassword values are migrated once and then retained only as
   // secretToken. The admin renderer is the only caller requesting this field.
   secretToken: validSecret(offer.secretToken || offer.offerPassword, 'OFF') || generateOfferSecret(),
+  purchaseMode: ['balance','manual','direct'].includes(offer.purchaseMode) ? offer.purchaseMode : 'balance',
+  customFields: Array.isArray(offer.customFields) ? offer.customFields.map(normalizeField).sort((a,b)=>a.order-b.order) : [],
   popups: Array.isArray(offer.popups) ? offer.popups.map(normalizePopup).sort((a, b) => a.order - b.order) : []
 });
 

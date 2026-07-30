@@ -9,7 +9,7 @@ import CategoryCard from '../components/CategoryCard.js';
 import ProductCard from '../components/ProductCard.js';
 import { escapeHTML, safeURL } from '../utils/sanitizers.js';
 import { formatPrice } from '../utils/formatters.js';
-import { hydrateCatalogImages, injectIcons, showToast } from '../utils/dom-utils.js';
+import { hydrateCatalogImages, injectIcons, readFileAsDataURL, showToast } from '../utils/dom-utils.js';
 
 let categories = [];
 let currentPurchase = null;
@@ -52,6 +52,8 @@ const openProduct = (productId) => {
   requestAnimationFrame(() => hydrateCatalogImages(offersTarget || document));
 };
 
+const purchaseFieldControl=(field)=>{const id=`field-${escapeHTML(field.id)}`,required=field.required?'required':'',placeholder=escapeHTML(field.placeholder||'');if(['textarea','note'].includes(field.type))return`<textarea class="form-input" id="${id}" data-order-field="${escapeHTML(field.id)}" placeholder="${placeholder}" ${required}></textarea>`;if(field.type==='select')return`<select class="form-input" id="${id}" data-order-field="${escapeHTML(field.id)}" ${required}><option value="">-- اختر --</option>${(field.options||[]).map((option)=>`<option value="${escapeHTML(option)}">${escapeHTML(option)}</option>`).join('')}</select>`;if(field.type==='file')return`<input class="form-input" id="${id}" data-order-field="${escapeHTML(field.id)}" type="file" accept="image/*" ${required}>`;const type=['email','password','number','url','tel'].includes(field.type)?field.type:'text';return`<input class="form-input" id="${id}" data-order-field="${escapeHTML(field.id)}" type="${type}" placeholder="${placeholder}" ${required}>`;};
+
 const startPurchase = (productId, offerId) => {
   const found = findProduct(productId); if (!found) return;
   const offer = (found.item.offers || []).find((entry) => String(entry.id || '') === String(offerId)) || found.item.offers?.[0];
@@ -67,11 +69,13 @@ const startPurchase = (productId, offerId) => {
   const title=document.getElementById('customerModalTitle');if(title)title.textContent=purchaseSettings.purchasePageTitle||'تأكيد الطلب';
   let description=document.getElementById('purchasePageDescription');if(!description&&title){description=document.createElement('p');description.id='purchasePageDescription';title.after(description);}if(description)description.textContent=purchaseSettings.purchasePageDescription||'راجع تفاصيل طلبك ثم أكد العملية.';
   const submitLabel=document.querySelector('#customerForm [type="submit"] span:last-child');if(submitLabel)submitLabel.textContent=purchaseSettings.purchaseConfirmText||'تأكيد الطلب';
-  const balanceCard=modal?.querySelector('.payment-from-balance-card');if(balanceCard)balanceCard.style.display=purchaseSettings.purchaseShowBalance===false?'none':'';
+  const mode=offer.purchaseMode||'balance';
+  const balanceCard=modal?.querySelector('.payment-from-balance-card');if(balanceCard)balanceCard.style.display=(mode!=='balance'||purchaseSettings.purchaseShowBalance===false)?'none':'';
+  const paymentLabel=modal?.querySelector('.wallet-section-title span:last-child');if(paymentLabel)paymentLabel.textContent=mode==='balance'?'طريقة الدفع: الخصم من رصيد حسابك':mode==='manual'?'طريقة الإكمال: طلب يدوي بانتظار الإدارة':'طريقة الإكمال: اختيار منصة بعد حفظ الطلب';
   const orderSummary=modal?.querySelector('.order-summary');if(orderSummary)orderSummary.style.display=purchaseSettings.purchaseShowPrice===false?'none':'';
   const orderDetails=document.getElementById('orderDetailsCard');if(orderDetails)orderDetails.style.display=purchaseSettings.purchaseShowDetails===false?'none':'';
-  const fields = getProductFields(found.item); const container = document.getElementById('dynamicFieldsContainer');
-  if (container) container.innerHTML = fields.map((field) => `<div class="form-group"><label class="form-label" for="field-${escapeHTML(field.id)}">${escapeHTML(field.label)}${field.required ? ' *' : ''}</label>${field.type === 'note' ? `<textarea class="form-input" id="field-${escapeHTML(field.id)}" data-order-field="${escapeHTML(field.id)}" placeholder="${escapeHTML(field.placeholder || '')}" ${field.required ? 'required' : ''}></textarea>` : `<input class="form-input" id="field-${escapeHTML(field.id)}" data-order-field="${escapeHTML(field.id)}" type="${escapeHTML(['email', 'password', 'number', 'url'].includes(field.type) ? field.type : 'text')}" placeholder="${escapeHTML(field.placeholder || '')}" ${field.required ? 'required' : ''}>`}</div>`).join('');
+  const fields = Array.isArray(offer.customFields) ? offer.customFields : []; const container = document.getElementById('dynamicFieldsContainer');
+  if (container) container.innerHTML = fields.map((field) => `<div class="form-group"><label class="form-label" for="field-${escapeHTML(field.id)}">${escapeHTML(field.label)}${field.required ? ' *' : ''}</label>${purchaseFieldControl(field)}</div>`).join('');
   const details = document.getElementById('orderDetailsCard'); if (details) details.innerHTML = `<strong>${escapeHTML(found.item.name)}</strong><span>${escapeHTML(offer.name || '')}</span><b>${formatPrice(Number(offer.price || 0), offer.currency || 'YER')}</b>`;
   const total = document.getElementById('modalTotal'); if (total) total.textContent = formatPrice(Number(offer.price || 0), offer.currency || 'YER');
   const balance = getUserBalance(user.uid); const balanceTarget = document.getElementById('buyModalUserBalance'); if (balanceTarget) balanceTarget.textContent = formatPrice(balance);
@@ -85,8 +89,11 @@ const submitPurchase = async (event) => {
   event.preventDefault(); if (!currentPurchase) return;
   const form = event.currentTarget; if (!form.reportValidity()) return;
   const user = authStore.getState().user; const price = Number(currentPurchase.offer.price || 0); const balance = getUserBalance(user.uid);
-  if (price > balance) { showToast('toast_error_balance', 'error'); return; }
-  const fields = Object.fromEntries([...form.querySelectorAll('[data-order-field]')].map((input) => [input.dataset.orderField, input.value.trim()]));
+  const purchaseMode=currentPurchase.offer.purchaseMode||'balance';
+  if (purchaseMode==='balance' && price > balance) { showToast('toast_error_balance', 'error'); return; }
+  const oversized=[...form.querySelectorAll('input[type="file"][data-order-field]')].find((input)=>input.files?.[0]?.size>1024*1024);if(oversized){showToast('حجم الملف المرفق يجب ألا يتجاوز 1 MB','error');return;}
+  const fieldEntries=await Promise.all([...form.querySelectorAll('[data-order-field]')].map(async(input)=>{if(input.type==='file'){const file=input.files?.[0];if(!file)return[input.dataset.orderField,null];return[input.dataset.orderField,{name:file.name,type:file.type,size:file.size,data:await readFileAsDataURL(file)}];}return[input.dataset.orderField,input.value.trim()];}));
+  const fields=Object.fromEntries(fieldEntries);
   const button = form.querySelector('[type="submit"]'); if (button) button.disabled = true;
   try {
     const order = await securePurchase({
@@ -94,7 +101,8 @@ const submitPurchase = async (event) => {
       offerId: currentPurchase.offer.id, customerFields: fields
     });
     await refreshBalance(user.uid).catch(() => {});
-    closeCustomerModal(); form.reset(); currentPurchase = null; showToast('toast_order_saved_with_id', 'success', { replacements: { id: order.id } }); void showPurchaseChannels(order);
+    closeCustomerModal(); form.reset(); currentPurchase = null; showToast('toast_order_saved_with_id', 'success', { replacements: { id: order.id } });
+    if(order.purchaseMode==='direct')void showPurchaseChannels(order);
   } catch (error) {
     console.error('[category] secure purchase failed', error);
     showToast(error.message || 'toast_order_save_failed', 'error');

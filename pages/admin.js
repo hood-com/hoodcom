@@ -269,16 +269,18 @@ export const editOfferModal = (categoryId, itemId, offerId) => {
     <label>السعر<input type="number" class="form-input" name="price" min="0" step="0.01" value="${Number(offer.price || 0)}" required></label>
     <label>السعر القديم<input type="number" class="form-input" name="oldPrice" min="0" step="0.01" value="${Number(offer.oldPrice || 0)}"></label>
     <label>العملة<select class="form-input" name="currency">${currencyOptions(offer.currency)}</select></label>
+    <label>طريقة إكمال الشراء<select class="form-input" name="purchaseMode">${selectOptions([['balance','خصم فوري من الرصيد'],['manual','طلب يدوي معلّق'],['direct','حفظ الطلب ثم اختيار منصة']],offer.purchaseMode||'balance')}</select></label>
     <label>الترتيب<input type="number" class="form-input" name="order" min="0" value="${Number(offer.order || 0)}"></label>
     <label class="admin-editor-span-2">الوصف<textarea class="form-input" name="description" rows="4">${escapeHTML(offer.description || '')}</textarea></label>
   </div>${imageEditor('editOfferImage', offer.image, 'صورة العرض')}
   <div class="admin-secret-panel"><strong>رمز العرض السري (للمدير فقط)</strong>${secretTokenMarkup(offer.secretToken)}</div>
+  <div class="admin-editor-section"><div class="admin-editor-section-head"><h4>حقول هذا العرض فقط</h4><button type="button" class="btn btn-sm btn-outline" data-editor-action="add-offer-field">+ حقل للعرض</button></div><div id="editOfferFields">${(offer.customFields||[]).map(dynamicFieldRow).join('')}</div></div>
   <div class="admin-editor-section"><div class="admin-editor-section-head"><h4>تنبيهات العرض قبل الشراء</h4><button type="button" class="btn btn-sm btn-outline" data-editor-action="add-popup">+ تنبيه</button></div><div id="editOfferPopups">${(offer.popups || []).map(popupRow).join('')}</div></div>`, async (form) => {
     await updateOffer(category.id, item.id, offer.id, {
       name: sanitizeInput(form.elements.name.value, 150), description: sanitizeInput(form.elements.description.value, 1000),
       price: sanitizeNumber(form.elements.price.value, { min: 0 }), oldPrice: sanitizeNumber(form.elements.oldPrice.value, { min: 0 }),
-      currency: form.elements.currency.value, status: form.elements.status.value,
-      order: sanitizeNumber(form.elements.order.value, { min: 0, integer: true }), image: imageValue(form, 'editOfferImagePreview', offer.image),
+      currency: form.elements.currency.value, status: form.elements.status.value, purchaseMode: form.elements.purchaseMode.value,
+      customFields: collectDynamicFields(form), order: sanitizeNumber(form.elements.order.value, { min: 0, integer: true }), image: imageValue(form, 'editOfferImagePreview', offer.image),
       popups: collectPopups(form)
     });
     await refreshCategories();
@@ -572,6 +574,7 @@ const bindEditModal = () => {
     const action = event.target.closest('[data-editor-action]')?.dataset.editorAction; if (!action) return;
     if (action === 'remove-row') event.target.closest('.admin-editor-row')?.remove();
     if (action === 'add-field') byId('editItemFields')?.insertAdjacentHTML('beforeend', dynamicFieldRow({}, byId('editItemFields').children.length));
+    if (action === 'add-offer-field') byId('editOfferFields')?.insertAdjacentHTML('beforeend', dynamicFieldRow({}, byId('editOfferFields').children.length));
     if (action === 'add-service-field') byId('editServiceFields')?.insertAdjacentHTML('beforeend', dynamicFieldRow({}, byId('editServiceFields').children.length));
     if (action === 'add-popup') byId('editOfferPopups')?.insertAdjacentHTML('beforeend', popupRow({}, byId('editOfferPopups').children.length));
     if (action === 'clear-image') { const preview = byId(event.target.closest('[data-preview-id]').dataset.previewId); if (preview) { preview.src = ''; preview.dataset.imageValue = ''; preview.hidden = true; preview.nextElementSibling?.removeAttribute('hidden'); } }
@@ -604,7 +607,7 @@ const bindAddForms = () => {
     event.preventDefault();
     try { await saveAction(buttonFor(event, '[type="submit"]'), async () => {
       const [categoryId, itemId] = byId('addOfferItem').value.split('::'); const found = findItem(itemId, categoryId); if (!found) throw new Error('اختر المنتج أولاً');
-      const offer = { id: createId('offer'), name: sanitizeInput(byId('newOfferName').value, 150), price: sanitizeNumber(byId('newOfferPrice').value, { min: 0 }), oldPrice: sanitizeNumber(byId('newOfferOldPrice').value, { min: 0 }), description: sanitizeInput(byId('newOfferDesc').value, 1000), currency: byId('newOfferCurrency').value, image: await compressedImageFromInput('newOfferImage'), status: 'available', order: found.item.offers.length + 1, popups: [] };
+      const offer = { id: createId('offer'), name: sanitizeInput(byId('newOfferName').value, 150), price: sanitizeNumber(byId('newOfferPrice').value, { min: 0 }), oldPrice: sanitizeNumber(byId('newOfferOldPrice').value, { min: 0 }), description: sanitizeInput(byId('newOfferDesc').value, 1000), currency: byId('newOfferCurrency').value, purchaseMode:byId('newOfferPurchaseMode')?.value||'balance', customFields:[], image: await compressedImageFromInput('newOfferImage'), status: 'available', order: found.item.offers.length + 1, popups: [] };
       const updatedItem = { ...found.item, offers: [...found.item.offers, offer] };
       await saveCategoryToFirebase({ ...found.category, items: found.category.items.map((entry) => entry.id === found.item.id ? updatedItem : entry) });
       await refreshCategories(); event.target.reset(); resetPreview('newOfferImagePreview'); renderAll();
