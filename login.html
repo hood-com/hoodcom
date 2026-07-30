@@ -113,6 +113,13 @@ select.form-input:disabled{opacity:0.5}
       <p>كل ما تحتاجه في مكان واحد</p>
     </div>
 
+    <section class="auth-choice active" id="authChoice" aria-label="اختيار نوع الدخول">
+      <h2>مرحبًا بك في هود كوم</h2>
+      <p>اختر الخطوة المناسبة للمتابعة</p>
+      <button type="button" class="auth-choice-btn auth-choice-btn-primary" id="authChoiceRegisterBtn"><strong>إنشاء حساب جديد</strong><small>ابدأ هنا إذا لم يكن لديك حساب</small></button>
+      <button type="button" class="auth-choice-btn" id="authChoiceLoginBtn"><strong>تسجيل الدخول</strong><small>لديك حساب سابق</small></button>
+    </section>
+
     <!-- ==================== نموذج تسجيل الدخول ==================== -->
     <div class="login-first-step-notice" role="note">
       <span class="login-first-step-notice__icon" aria-hidden="true">!</span>
@@ -169,7 +176,7 @@ select.form-input:disabled{opacity:0.5}
     </form>
 
     <!-- ==================== نموذج إنشاء حساب ==================== -->
-    <form class="login-form active" id="registerForm" novalidate>
+    <form class="login-form" id="registerForm" novalidate>
       <div class="login-logo" style="margin-bottom:18px">
         <img src="logo.svg" alt="شعار هود كوم" width="120" height="120">
         <h1>هود كوم</h1>

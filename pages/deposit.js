@@ -102,7 +102,8 @@ const bindTabs = () => {
 export const initDepositPage = async () => {
   await initCommonPage(); const user = authStore.getState().user;
   if (!user) { globalThis.location.href = 'login.html?redirect=deposit.html'; return; }
-  if(!['verified','active'].includes(user.accountStatus)){showToast('يجب توثيق رقم الهاتف أولًا لتغذية الحساب','error',{sticky:true});globalThis.location.href='account.html';return;}
+  const isAdmin=user.role==='admin'||user.appMetadata?.role==='admin';
+  if(!isAdmin&&!['verified','active'].includes(user.accountStatus)){showToast('يجب توثيق رقم الهاتف أولًا لتغذية الحساب','error',{sticky:true});globalThis.location.href='account.html';return;}
   await Promise.all([loadBalance(user.uid), loadServices()]);
   const balance = balanceStore.getState().balance;
   const target = document.getElementById('userCurrentBalanceDisplay'); if (target) target.textContent = formatPrice(balance);

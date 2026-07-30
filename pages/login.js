@@ -39,6 +39,7 @@ const populateDistricts = (countryCode, cityCode) => {
 };
 
 const switchMode = (mode) => {
+  element('authChoice')?.classList.toggle('active', mode === 'choice');
   element('loginForm')?.classList.toggle('active', mode === 'login');
   element('registerForm')?.classList.toggle('active', mode === 'register');
 };
@@ -133,6 +134,8 @@ const bindLogin = () => {
 };
 
 const bindRegistration = () => {
+  element('authChoiceRegisterBtn')?.addEventListener('click', () => switchMode('register'));
+  element('authChoiceLoginBtn')?.addEventListener('click', () => switchMode('login'));
   element('showRegisterBtn')?.addEventListener('click', (event) => { event.preventDefault(); switchMode('register'); });
   element('showLoginBtn')?.addEventListener('click', (event) => { event.preventDefault(); switchMode('login'); setStep(1); });
   element('nextStepBtn')?.addEventListener('click', () => { if (!validateFirstStep()) { showToast('toast_registration_fields_invalid', 'error'); return; } showConfirmation(); setStep(2); });
