@@ -5,4 +5,5 @@ export const createDepositRequest=(data)=>call({action:'user-create',...data});
 export const listMyDeposits=()=>call({action:'user-list'});
 export const listDepositsForAdmin=()=>call({action:'admin-list'});
 export const saveDepositMethod=(method)=>call({action:'admin-save-method',method});
+export const deleteDepositMethod=(id)=>call({action:'admin-delete-method',id});
 export const updateDepositRequest=(data)=>call({action:'admin-update',...data});
