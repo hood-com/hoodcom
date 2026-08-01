@@ -1,30 +1,8 @@
-import { initCommonPage } from './common.js';
-import authStore from '../stores/auth-store.js';
-import { fetchOrders } from '../stores/order-store.js';
-import { getDB } from '../services/supabase-client.js';
-import { escapeHTML } from '../utils/sanitizers.js';
-import { formatDate, formatPrice } from '../utils/formatters.js';
-import { injectIcons } from '../utils/dom-utils.js';
-
-const renderReports = (user, profile, orders) => {
-  const target = document.getElementById('reportsContent'); if (!target) return;
-  const verified = (profile.accountStatus || user.accountStatus) === 'active' || profile.whatsappCodeStatus === 'verified';
-  // Security: verification is admin-only, no client-side code comparison, no self-activation via updateDocument
-  target.innerHTML = `<section class="report-card verification-card ${verified ? 'verified' : 'pending'}"><h2>توثيق الحساب</h2><p>الحالة: <strong>${verified ? 'موثّق ونشط' : 'بانتظار تأكيد الإدارة'}</strong></p>
-    ${verified ? '<div class="success-message">✓ تم توثيق حسابك بنجاح</div>' : `<div class="pending-message" style="background:rgba(255,215,0,0.08);border:1px dashed var(--gold);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;"><p>⏳ حسابك قيد المراجعة من قبل الإدارة.</p><p>سيتم توثيق حسابك بعد تأكيد بياناتك من لوحة التحكم.</p><p style="margin-top:8px;color:var(--text-secondary);font-size:12px;">للاستفسار تواصل مع الدعم عبر واتساب.</p></div>`}</section>
-    <section class="report-card"><h2>سجل الطلبات</h2><div class="orders-list">${orders.length ? orders.map((order) => `<article class="order-card"><header><strong>${escapeHTML(order.itemName || order.id)}</strong><span>${escapeHTML(order.status || 'pending')}</span></header><p>${escapeHTML(order.offerName || '')}</p><footer><b>${formatPrice(order.total || order.price || 0, order.currency || 'YER')}</b><time>${escapeHTML(formatDate(order.createdAt))}</time></footer></article>`).join('') : '<div class="empty-state">لا توجد طلبات</div>'}</div></section>`;
-  injectIcons(target);
-};
-
-export const initReportsPage = async () => {
-  await initCommonPage(); const user = authStore.getState().user;
-  if (!user) { globalThis.location.href = 'login.html?redirect=reports.html'; return; }
-  try {
-    const db = await getDB(); const [profile, orders] = await Promise.all([db.getDocument('users', user.uid), fetchOrders(user.uid)]);
-    renderReports(user, profile || user, orders);
-  } catch (error) {
-    const target = document.getElementById('reportsContent'); if (target) target.innerHTML = `<div class="error-message">${escapeHTML(error.message || 'تعذر تحميل العمليات')}</div>`;
-  }
-};
-
-export default initReportsPage;
+import{initCommonPage}from'./common.js';import authStore from'../stores/auth-store.js';import{fetchOrders}from'../stores/order-store.js';import{listMyDeposits}from'../services/deposit-service.js';import{escapeHTML}from'../utils/sanitizers.js';import{formatDate,formatPrice}from'../utils/formatters.js';import{showToast}from'../utils/dom-utils.js';
+const statusLabel=s=>({pending:'قيد الانتظار',processing:'قيد التنفيذ',approved:'مقبول',completed:'مكتمل',rejected:'مرفوض',cancelled:'ملغي'}[s]||s);const dayKey=v=>new Date(v||0).toISOString().slice(0,10);const dayLabel=v=>new Date(v+'T00:00:00').toLocaleDateString('ar-YE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+let operations=[];
+const normalize=(entry,type)=>({id:entry.id,type,status:entry.status||'pending',title:type==='deposit'?(entry.methodName||'تغذية الحساب'):(entry.itemName||entry.offerName||'طلب شراء'),subtitle:type==='deposit'?`طلب إيداع — ${entry.currency||'YER'}`:(entry.offerName||''),amount:Number(entry.approvedAmount||entry.total||entry.price||entry.amount||0),currency:entry.currency||'YER',createdAt:entry.createdAt,updatedAt:entry.updatedAt,reason:entry.rejectionReason||'',raw:entry});
+const render=()=>{const host=document.getElementById('reportsContent'),query=document.getElementById('operationsSearch')?.value.trim().toLowerCase()||'',status=document.getElementById('operationsStatus')?.value||'all',type=document.getElementById('operationsType')?.value||'all';const visible=operations.filter(o=>(status==='all'||o.status===status)&&(type==='all'||o.type===type)&&(!query||`${o.id} ${o.title} ${o.subtitle}`.toLowerCase().includes(query))),groups=Object.groupBy?Object.groupBy(visible,o=>dayKey(o.createdAt)):visible.reduce((a,o)=>((a[dayKey(o.createdAt)]||=[]).push(o),a),{});host.innerHTML=Object.keys(groups).sort().reverse().map(day=>`<section class="operations-day"><h2>${escapeHTML(dayLabel(day))}</h2>${groups[day].map(card).join('')}</section>`).join('')||'<div class="empty-state">لا توجد عمليات مطابقة</div>';};
+const card=o=>`<article class="operation-v2 operation-status-${escapeHTML(o.status)}"><header><div><strong>${escapeHTML(o.title)}</strong><small># ${escapeHTML(o.id)}</small></div><span>${escapeHTML(statusLabel(o.status))}</span></header><div class="operation-summary"><b>${formatPrice(o.amount,o.currency)}</b><time>${escapeHTML(formatDate(o.createdAt))}</time></div><button type="button" class="operation-details-toggle">عرض التفاصيل</button><div class="operation-details" hidden><dl><dt>النوع</dt><dd>${o.type==='deposit'?'تغذية حساب':'شراء'}</dd><dt>الحالة</dt><dd>${escapeHTML(statusLabel(o.status))}</dd><dt>التاريخ</dt><dd>${escapeHTML(formatDate(o.createdAt))}</dd>${o.reason?`<dt>سبب الرفض</dt><dd>${escapeHTML(o.reason)}</dd>`:''}</dl><pre>${escapeHTML(JSON.stringify(o.raw,null,2))}</pre></div></article>`;
+const shell=()=>{const root=document.getElementById('reportsContent');root.parentElement.insertAdjacentHTML('afterbegin','<section class="operations-toolbar"><input id="operationsSearch" class="form-input" placeholder="ابحث برقم العملية أو الاسم"><select id="operationsStatus" class="form-input"><option value="all">كل الحالات</option><option value="pending">قيد الانتظار</option><option value="processing">قيد التنفيذ</option><option value="completed">مكتمل</option><option value="rejected">مرفوض</option></select><select id="operationsType" class="form-input"><option value="all">كل العمليات</option><option value="purchase">المشتريات</option><option value="deposit">الإيداعات</option></select></section>');['operationsSearch','operationsStatus','operationsType'].forEach(id=>document.getElementById(id).addEventListener(id==='operationsSearch'?'input':'change',render));root.addEventListener('click',e=>{const b=e.target.closest('.operation-details-toggle');if(!b)return;const details=b.nextElementSibling;details.hidden=!details.hidden;b.textContent=details.hidden?'عرض التفاصيل':'إخفاء التفاصيل';});};
+export const initReportsPage=async()=>{await initCommonPage();const user=authStore.getState().user;if(!user){location.href='login.html?redirect=reports.html';return;}shell();try{const[orders,deposits]=await Promise.all([fetchOrders(user.uid),listMyDeposits().then(r=>r.items||[])]);operations=[...orders.map(o=>normalize(o,'purchase')),...deposits.map(d=>normalize(d,'deposit'))].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));render();}catch(error){showToast(error.message,'error',{sticky:true});}};export default initReportsPage;
