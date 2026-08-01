@@ -6,6 +6,7 @@ import {
   initRefreshButton, refreshAllData
 } from '../utils/dom-utils.js';
 import { getFullCatalogTimestamp } from '../services/catalog-cache.js';
+import { askNotificationPermission, listNotifications, markNotificationRead, showSystemNotification } from '../services/notification-service.js';
 import { initTranslationSystem, subscribeLanguage, t } from '../utils/i18n.js';
 import { getUserBalance } from '../services/balance-service.js';
 import {
@@ -506,6 +507,11 @@ const initUserWorkflowNotifications=async()=>{
   await check();userWorkflowTimer=globalThis.setInterval(check,7000);
 };
 
+let notificationTimer=null,knownNotificationIds=new Set();
+const notificationUnread=(item,userId)=>item.audience==='all'?!Array.isArray(item.readBy)||!item.readBy.includes(userId):item.read!==true;
+const renderNotificationCenter=async()=>{const panel=document.getElementById('hudNotificationPanel'),list=document.getElementById('hudNotificationList'),badge=document.getElementById('hudNotificationBadge'),user=authStore.getState().user;if(!panel||!list||!user)return;try{const{items}=await listNotifications(),unread=items.filter(item=>notificationUnread(item,user.uid));badge.textContent=unread.length>99?'99+':String(unread.length);badge.hidden=!unread.length;for(const item of unread){if(knownNotificationIds.size&&!knownNotificationIds.has(item.id))showSystemNotification(item.title,item.message,item.link);}knownNotificationIds=new Set(items.map(item=>item.id));list.innerHTML=items.map(item=>`<article class="hud-notification-item${notificationUnread(item,user.uid)?' unread':''}" data-notification-id="${escapeAttr(item.id)}" data-link="${escapeAttr(item.link||'')}"><div><strong>${escapeHTML(item.title||'إشعار')}</strong><p>${escapeHTML(item.message||'')}</p><small>${escapeHTML(item.createdAt?new Date(item.createdAt).toLocaleString('ar-YE'):'')}</small></div>${notificationUnread(item,user.uid)?'<span>جديد</span>':''}</article>`).join('')||'<div class="empty-state">لا توجد إشعارات</div>';}catch(error){list.innerHTML=`<div class="error-message">${escapeHTML(error.message)}</div>`;}};
+const installNotificationCenter=()=>{if(document.getElementById('hudNotificationBtn')||!authStore.getState().user)return;const nav=document.querySelector('.nav-actions'),button=document.createElement('button');button.id='hudNotificationBtn';button.className='nav-btn hud-notification-btn';button.type='button';button.setAttribute('aria-label','الإشعارات');button.innerHTML='<span data-icon="bell" data-size="20">🔔</span><b id="hudNotificationBadge" hidden>0</b>';nav?.prepend(button);const panel=document.createElement('aside');panel.id='hudNotificationPanel';panel.className='hud-notification-panel';panel.setAttribute('aria-hidden','true');panel.innerHTML='<header><h2>الإشعارات</h2><div><button id="enableSystemNotifications" class="btn btn-sm">تفعيل إشعارات الجهاز</button><button id="closeNotificationPanel" class="btn btn-sm">×</button></div></header><div id="hudNotificationList"></div>';document.body.append(panel);button.onclick=()=>{const open=panel.classList.toggle('open');panel.setAttribute('aria-hidden',String(!open));if(open)void renderNotificationCenter();};document.getElementById('closeNotificationPanel').onclick=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};document.getElementById('enableSystemNotifications').onclick=async()=>{const result=await askNotificationPermission();showToast(result==='granted'?'تم تفعيل إشعارات الجهاز ✅':'لم يتم منح إذن الإشعارات',result==='granted'?'success':'error');};panel.addEventListener('click',async event=>{const item=event.target.closest('[data-notification-id]');if(!item)return;await markNotificationRead(item.dataset.notificationId).catch(()=>{});if(item.dataset.link)location.href=item.dataset.link;else void renderNotificationCenter();});injectIcons(button);void renderNotificationCenter();notificationTimer=setInterval(renderNotificationCenter,12000);};
+
 export const initCommonPage = async () => {
   const theme = uiStore.getState().theme;
   document.documentElement.dataset.theme = theme;
@@ -543,6 +549,7 @@ export const initCommonPage = async () => {
   }
   renderAuthChrome();
   void initUserWorkflowNotifications();
+  installNotificationCenter();
   renderAdminMenuLink();
   const year = document.getElementById('footerYear'); if (year) year.textContent = String(new Date().getFullYear());
   return { auth: authStore.getState(), ui: uiStore.getState() };
