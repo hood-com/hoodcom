@@ -22,6 +22,7 @@ export const handler=async(event)=>{
     const body=JSON.parse(event.body||'{}'),action=String(body.action||'');
     if(action==='send-otp'){
       const email=String(body.email||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/u.test(email))return json(400,{error:'البريد الإلكتروني غير صالح'});
+      const ip=String(event.headers['x-nf-client-connection-ip']||event.headers['x-forwarded-for']||'unknown').split(',')[0].trim(),ipId=key('otp-ip',ip),ipRate=await normalized.get('rate_limits',ipId),nowIp=Date.now(),windowStart=Number(ipRate?.windowStart||nowIp),within=nowIp-windowStart<10*60*1000,count=within?Number(ipRate?.count||0):0;if(count>=10)return json(429,{error:'محاولات كثيرة من هذا الاتصال. حاول بعد عشر دقائق'});await db.upsert('rate_limits',ipId,{count:count+1,windowStart:within?windowStart:nowIp,updatedAt:new Date().toISOString()});
       const id=key('otp',email),current=await normalized.get('otp_cooldowns',id),now=Date.now(),nextAllowed=Number(current?.nextAllowed||0);
       if(nextAllowed>now)return json(429,{error:'انتظر قبل إعادة إرسال الرمز',retryAfter:Math.ceil((nextAllowed-now)/1000)});
       const service=process.env.SUPABASE_SERVICE_ROLE_KEY,url=process.env.SUPABASE_URL,response=await fetch(`${url}/auth/v1/otp`,{method:'POST',headers:{apikey:service,'content-type':'application/json'},body:JSON.stringify({email,create_user:true})});
